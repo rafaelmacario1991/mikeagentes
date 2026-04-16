@@ -1,0 +1,47 @@
+# Ambiente Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+env/
+
+# Variáveis de ambiente — NUNCA commitar
+.env
+*.env
+.env.*
+
+# n8n local
+.n8n/
+
+# Editor
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Scripts auxiliares de fix (gerados durante debug — não são parte do produto)
+fix_criar_*.py
+fix_*.py
+
+# MCP e credenciais locais — NUNCA commitar
+.mcp.json
+credentials.json
+activate_response.json
+*.credentials.json
+
+# Configuração local Claude Code
+.claude/
+
+# Workflows temporários
+workflow_final.json
+workflow_fixed.json
+workflow_live.json
+workflow_merged.json
+workflow_payload.json

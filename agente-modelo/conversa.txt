@@ -1,0 +1,9 @@
+[03:11, 16/04/2026] Rafael Macario: Agenda pra mim um corte de cabelo para 18/04 às 11h
+[03:11, 16/04/2026] Mk Autosolution: No dia 18/04/2026, temos horários disponíveis para o corte de cabelo às 11h e também em outros horários.
+[03:11, 16/04/2026] Mk Autosolution: Você gostaria de confirmar o agendamento para às 11h? E qual é o seu nome completo?
+[03:13, 16/04/2026] Rafael Macario: Rafael Macario
+[03:13, 16/04/2026] Mk Autosolution: Obrigado, Rafael Macario! Vou criar o agendamento para você no dia 18/04/2026, às 11h para um corte de cabelo. Um momento, por favor.
+[03:14, 16/04/2026] Mk Autosolution: {"tenant_id":"aaaaaaaa-0000-0000-0000-000000000001","client_name":"Rafael Macario","client_phone":"558199258551","data":"2026-04-18","horario":"11:00"}
+[03:23, 16/04/2026] Rafael Macario: Olá, pode agendar um corte de cabelo para o dia 21/04 às 15h para mim!?
+[03:23, 16/04/2026] Mk Autosolution: Vou verificar a disponibilidade para o corte de cabelo no dia 21/04/2026, às 15h. Um momento, por favor.
+[03:23, 16/04/2026] Mk Autosolution: {"tenant_id":"aaaaaaaa-0000-0000-0000-000000000001","data":"2026-04-21"}

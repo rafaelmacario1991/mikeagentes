@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Editar' if service else 'Novo' }} Servico{% endblock %}
+
+{% block content %}
+<div class="page-header" style="display:flex; align-items:center; gap:14px;">
+  <a href="/services" style="color:var(--muted); display:flex; align-items:center; gap:6px; font-size:13px; text-decoration:none;">
+    <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+    Servicos
+  </a>
+  <span style="color:var(--border);">/</span>
+  <div class="page-title" style="margin:0;">{{ 'Editar servico' if service else 'Novo servico' }}</div>
+</div>
+
+<div style="max-width:560px;">
+  <div class="card">
+    <form method="post" action="{{ '/services/' + service.id + '/edit' if service else '/services/new' }}">
+
+      <div style="margin-bottom:18px;">
+        <label class="field-label" for="name">Nome do servico</label>
+        <input class="input-field" type="text" id="name" name="name"
+          placeholder="Ex: Corte masculino" value="{{ service.name if service else '' }}" required autofocus>
+      </div>
+
+      <div style="margin-bottom:18px;">
+        <label class="field-label">Profissionais que realizam este servico</label>
+        {% if professionals %}
+          <div style="display:flex; flex-direction:column; gap:10px; margin-top:8px;">
+            {% for pro in professionals %}
+            <label style="display:flex; align-items:center; gap:10px; cursor:pointer; padding:10px 14px; background:#0d1424; border:1px solid var(--border); border-radius:8px; transition:border-color .15s;"
+                   onmouseover="this.style.borderColor='#3b82f6'" onmouseout="this.style.borderColor='var(--border)'">
+              <input type="checkbox" name="professional_id" value="{{ pro.id }}"
+                {% if pro.id in (checked_pro_ids or []) or (not service and loop.first) %}checked{% endif %}
+                style="width:16px; height:16px; accent-color:#3b82f6; cursor:pointer;">
+              <span style="font-size:13.5px; color:#e2e8f0; font-weight:500;">{{ pro.name }}</span>
+              {% if pro.role %}
+                <span style="font-size:12px; color:var(--muted); margin-left:auto;">{{ pro.role }}</span>
+              {% endif %}
+            </label>
+            {% endfor %}
+          </div>
+          <div style="font-size:11.5px; color:var(--muted); margin-top:8px;">
+            Selecione um ou mais profissionais. O servico sera criado automaticamente para cada um selecionado.
+          </div>
+        {% else %}
+          <div style="padding:12px 16px; background:#0d1424; border:1px solid var(--border); border-radius:8px; font-size:13px; color:var(--muted);">
+            Nenhum profissional cadastrado. <a href="/professionals/new" style="color:#3b82f6;">Cadastre um profissional primeiro.</a>
+          </div>
+        {% endif %}
+      </div>
+
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:28px;">
+        <div>
+          <label class="field-label" for="duration_minutes">Duracao (minutos)</label>
+          <input class="input-field" type="number" id="duration_minutes" name="duration_minutes"
+            min="5" max="480" step="5" placeholder="Ex: 30"
+            value="{{ service.duration_min if service else '' }}" required>
+        </div>
+        <div>
+          <label class="field-label" for="price">Preco (R$)</label>
+          <input class="input-field" type="number" id="price" name="price"
+            min="0" step="0.01" placeholder="Ex: 35.00"
+            value="{{ service.price if service else '' }}" required>
+        </div>
+      </div>
+
+      <div style="display:flex; gap:10px;">
+        <button type="submit" class="btn-primary">{{ 'Salvar alteracoes' if service else 'Criar servico' }}</button>
+        <a href="/services" class="btn-ghost">Cancelar</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

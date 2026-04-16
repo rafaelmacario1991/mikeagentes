@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="pt-BR" x-data="appShell()" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Painel{% endblock %} — Mike Agentes</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #080d16;
+      --surface: #0f172a;
+      --surface-2: #1a2540;
+      --border: rgba(255,255,255,0.07);
+      --accent: #3b82f6;
+      --accent-dim: rgba(59,130,246,0.12);
+      --green: #22c55e;
+      --red: #ef4444;
+      --text: #e2e8f0;
+      --muted: #64748b;
+      --font-mono: 'JetBrains Mono', monospace;
+      --font-sans: 'DM Sans', sans-serif;
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; }
+    body {
+      font-family: var(--font-sans);
+      background: var(--bg);
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+    }
+    .mono { font-family: var(--font-mono); }
+    .sidebar-link {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 14px;
+      border-radius: 8px;
+      font-size: 13.5px;
+      font-weight: 500;
+      color: var(--muted);
+      transition: all 0.15s ease;
+      text-decoration: none;
+      letter-spacing: 0.01em;
+    }
+    .sidebar-link:hover { color: var(--text); background: rgba(255,255,255,0.05); }
+    .sidebar-link.active { color: #fff; background: var(--accent-dim); border-left: 2px solid var(--accent); padding-left: 12px; }
+    .sidebar-link svg { flex-shrink: 0; }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+    }
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-family: var(--font-sans);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    .btn-primary:hover { opacity: 0.88; }
+    .btn-ghost {
+      background: rgba(255,255,255,0.05);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 9px 18px;
+      border-radius: 8px;
+      font-family: var(--font-sans);
+      font-size: 13.5px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+      text-decoration: none;
+      display: inline-block;
+    }
+    .btn-ghost:hover { background: rgba(255,255,255,0.1); }
+    .btn-danger {
+      background: rgba(239,68,68,0.12);
+      color: var(--red);
+      border: 1px solid rgba(239,68,68,0.2);
+      padding: 8px 16px;
+      border-radius: 7px;
+      font-family: var(--font-sans);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn-danger:hover { background: rgba(239,68,68,0.22); }
+    .btn-success {
+      background: rgba(34,197,94,0.12);
+      color: var(--green);
+      border: 1px solid rgba(34,197,94,0.2);
+      padding: 8px 16px;
+      border-radius: 7px;
+      font-family: var(--font-sans);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn-success:hover { background: rgba(34,197,94,0.22); }
+    .input-field {
+      width: 100%;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-family: var(--font-sans);
+      font-size: 14px;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .input-field:focus { border-color: var(--accent); }
+    .input-field::placeholder { color: var(--muted); }
+    textarea.input-field { resize: vertical; min-height: 120px; }
+    select.input-field option { background: #1a2540; }
+    label.field-label {
+      display: block;
+      font-size: 12.5px;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 7px;
+    }
+    .badge-green { background: rgba(34,197,94,0.12); color: #22c55e; border: 1px solid rgba(34,197,94,0.2); padding: 3px 10px; border-radius: 99px; font-size: 12px; font-weight: 600; }
+    .badge-red { background: rgba(239,68,68,0.12); color: #ef4444; border: 1px solid rgba(239,68,68,0.2); padding: 3px 10px; border-radius: 99px; font-size: 12px; font-weight: 600; }
+    .badge-yellow { background: rgba(234,179,8,0.12); color: #eab308; border: 1px solid rgba(234,179,8,0.2); padding: 3px 10px; border-radius: 99px; font-size: 12px; font-weight: 600; }
+    .badge-blue { background: rgba(59,130,246,0.12); color: #3b82f6; border: 1px solid rgba(59,130,246,0.2); padding: 3px 10px; border-radius: 99px; font-size: 12px; font-weight: 600; }
+    .badge-gray { background: rgba(100,116,139,0.15); color: #94a3b8; border: 1px solid rgba(100,116,139,0.2); padding: 3px 10px; border-radius: 99px; font-size: 12px; font-weight: 600; }
+    .data-table { width: 100%; border-collapse: collapse; }
+    .data-table th { font-size: 11.5px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border); }
+    .data-table td { padding: 13px 14px; font-size: 14px; border-bottom: 1px solid rgba(255,255,255,0.04); vertical-align: middle; }
+    .data-table tr:last-child td { border-bottom: none; }
+    .data-table tbody tr:hover td { background: rgba(255,255,255,0.02); }
+    .page-header { margin-bottom: 28px; }
+    .page-title { font-size: 22px; font-weight: 700; color: #f1f5f9; letter-spacing: -0.02em; }
+    .page-subtitle { font-size: 13.5px; color: var(--muted); margin-top: 4px; }
+    /* Toggle switch */
+    .toggle-wrap { display: flex; align-items: center; gap: 10px; }
+    .toggle-input { display: none; }
+    .toggle-label {
+      position: relative; width: 44px; height: 24px; cursor: pointer;
+      background: rgba(255,255,255,0.1); border-radius: 99px; transition: background 0.2s;
+      flex-shrink: 0;
+    }
+    .toggle-label::after {
+      content: ''; position: absolute; top: 3px; left: 3px;
+      width: 18px; height: 18px; background: #fff; border-radius: 50%;
+      transition: transform 0.2s; box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+    }
+    .toggle-input:checked + .toggle-label { background: var(--accent); }
+    .toggle-input:checked + .toggle-label::after { transform: translateX(20px); }
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+    /* Toast */
+    .toast {
+      position: fixed; bottom: 24px; right: 24px; z-index: 9999;
+      padding: 14px 20px; border-radius: 10px; font-size: 14px; font-weight: 500;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+      animation: slideUp 0.25s ease;
+    }
+    .toast-success { background: #166534; border: 1px solid #22c55e; color: #bbf7d0; }
+    .toast-error { background: #7f1d1d; border: 1px solid #ef4444; color: #fecaca; }
+    @keyframes slideUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+  </style>
+</head>
+<body class="h-full flex" style="background: var(--bg);">
+
+  <!-- Sidebar -->
+  <aside style="width:220px; min-height:100vh; background:var(--surface); border-right:1px solid var(--border); display:flex; flex-direction:column; flex-shrink:0; position:fixed; top:0; left:0; height:100%;">
+    <!-- Logo -->
+    <div style="padding:20px 18px 16px; border-bottom:1px solid var(--border);">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <div style="width:32px; height:32px; background:var(--accent); border-radius:8px; display:flex; align-items:center; justify-content:center;">
+          <svg width="17" height="17" fill="none" viewBox="0 0 24 24" stroke="white" stroke-width="2.5"><path d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-4 4v-4z"/></svg>
+        </div>
+        <div>
+          <div style="font-size:14px; font-weight:700; color:#f1f5f9; letter-spacing:-0.01em;">Mike Agentes</div>
+          <div style="font-size:11px; color:var(--muted); font-family:var(--font-mono);">painel</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Nav -->
+    <nav style="padding:12px 10px; flex:1; overflow-y:auto;">
+      <div style="font-size:10.5px; font-weight:600; text-transform:uppercase; letter-spacing:0.1em; color:var(--muted); padding:6px 14px 8px;">Menu</div>
+
+      <a href="/dashboard" class="sidebar-link {% if request.url.path == '/dashboard' %}active{% endif %}">
+        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        Dashboard
+      </a>
+      <a href="/agent/config" class="sidebar-link {% if '/agent' in request.url.path %}active{% endif %}">
+        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93A10 10 0 0 0 4.93 19.07M4.93 4.93a10 10 0 0 0 14.14 14.14"/></svg>
+        Configurar Agente
+      </a>
+      <a href="/professionals" class="sidebar-link {% if '/professionals' in request.url.path %}active{% endif %}">
+        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        Profissionais
+      </a>
+      <a href="/services" class="sidebar-link {% if '/services' in request.url.path %}active{% endif %}">
+        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg>
+        Servicos
+      </a>
+      <a href="/availability" class="sidebar-link {% if '/availability' in request.url.path %}active{% endif %}">
+        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+        Disponibilidade
+      </a>
+      <a href="/appointments" class="sidebar-link {% if '/appointments' in request.url.path %}active{% endif %}">
+        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
+        Agenda
+      </a>
+
+      {% if user.is_admin %}
+      <div style="font-size:10.5px; font-weight:600; text-transform:uppercase; letter-spacing:0.1em; color:var(--muted); padding:14px 14px 8px;">Admin</div>
+      <a href="/admin/tenants" class="sidebar-link {% if '/admin' in request.url.path %}active{% endif %}">
+        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        Tenants
+      </a>
+      {% if request.cookies.get('impersonate_tenant_id') %}
+      <a href="/admin/switch-exit" class="sidebar-link" style="color:#eab308;">
+        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Sair da simulacao
+      </a>
+      {% endif %}
+      {% endif %}
+    </nav>
+
+    <!-- User / Logout -->
+    <div style="padding:12px 10px; border-top:1px solid var(--border);">
+      <div style="padding:8px 14px; margin-bottom:4px;">
+        <div style="font-size:12px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ user.email }}</div>
+      </div>
+      <form method="post" action="/logout">
+        <button type="submit" class="sidebar-link" style="width:100%; background:none; border:none; cursor:pointer; text-align:left;">
+          <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          Sair
+        </button>
+      </form>
+    </div>
+  </aside>
+
+  <!-- Main content -->
+  <div style="margin-left:220px; flex:1; display:flex; flex-direction:column; min-height:100vh;">
+    <!-- Topbar -->
+    <header style="height:56px; border-bottom:1px solid var(--border); display:flex; align-items:center; padding:0 28px; gap:12px; background:var(--bg); position:sticky; top:0; z-index:10;">
+      <div style="flex:1;">
+        <span style="font-size:13px; font-weight:600; color:var(--text);">{% block page_title %}Painel{% endblock %}</span>
+      </div>
+      {% if user.is_admin and request.cookies.get('impersonate_tenant_id') %}
+      <div style="display:flex; align-items:center; gap:8px; background:rgba(234,179,8,0.1); border:1px solid rgba(234,179,8,0.3); padding:5px 12px; border-radius:99px;">
+        <div style="width:6px;height:6px;border-radius:50%;background:#eab308;"></div>
+        <span style="font-size:12px; font-weight:600; color:#eab308;">Simulando tenant</span>
+        <a href="/admin/switch-exit" style="font-size:12px; color:#eab308; text-decoration:underline;">Sair</a>
+      </div>
+      {% endif %}
+      <div style="font-family:var(--font-mono); font-size:11px; color:var(--muted);" id="clock"></div>
+    </header>
+
+    <!-- Page content -->
+    <main style="flex:1; padding:28px; overflow-y:auto;">
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+
+  <!-- Toast container -->
+  <div x-show="toast.show" x-cloak :class="'toast toast-' + toast.type" x-text="toast.message" @click="toast.show = false" style="cursor:pointer;"></div>
+
+  <script>
+    function appShell() {
+      return {
+        toast: { show: false, message: '', type: 'success' },
+        showToast(msg, type = 'success', duration = 3500) {
+          this.toast = { show: true, message: msg, type };
+          setTimeout(() => { this.toast.show = false; }, duration);
+        }
+      }
+    }
+    // Relógio topbar
+    function updateClock() {
+      const el = document.getElementById('clock');
+      if (el) el.textContent = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    }
+    updateClock();
+    setInterval(updateClock, 30000);
+  </script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

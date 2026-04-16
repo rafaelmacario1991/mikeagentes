@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="page-header" style="display:flex; align-items:flex-start; justify-content:space-between;">
+  <div>
+    <div class="page-title">Dashboard</div>
+    <div class="page-subtitle mono" style="font-size:12px;">{{ today }}</div>
+  </div>
+  <!-- Status do agente -->
+  <div style="display:flex; align-items:center; gap:10px; background:var(--surface); border:1px solid var(--border); padding:10px 16px; border-radius:10px;">
+    <div style="width:8px;height:8px;border-radius:50%;background:{% if agent_active %}var(--green){% else %}var(--muted){% endif %};
+      {% if agent_active %}box-shadow:0 0 0 3px rgba(34,197,94,0.2);animation:pulse 2s infinite;{% endif %}"></div>
+    <span style="font-size:13px; font-weight:600; color:{% if agent_active %}var(--green){% else %}var(--muted){% endif %};">
+      {{ agent_name }} — {% if agent_active %}Ativo{% else %}Inativo{% endif %}
+    </span>
+    <a href="/agent/config" style="font-size:12px; color:var(--accent); text-decoration:none; margin-left:4px;">Config</a>
+  </div>
+</div>
+
+<style>
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+</style>
+
+<!-- Metric cards -->
+<div style="display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:28px;">
+  <div class="card" style="border-top:2px solid var(--accent);">
+    <div style="font-size:11.5px; font-weight:600; text-transform:uppercase; letter-spacing:0.08em; color:var(--muted); margin-bottom:10px;">Total Hoje</div>
+    <div style="font-size:36px; font-weight:700; color:#f1f5f9; font-family:var(--font-mono); line-height:1;">{{ total_today }}</div>
+    <div style="font-size:12.5px; color:var(--muted); margin-top:6px;">agendamentos</div>
+  </div>
+  <div class="card" style="border-top:2px solid var(--green);">
+    <div style="font-size:11.5px; font-weight:600; text-transform:uppercase; letter-spacing:0.08em; color:var(--muted); margin-bottom:10px;">Confirmados</div>
+    <div style="font-size:36px; font-weight:700; color:var(--green); font-family:var(--font-mono); line-height:1;">{{ confirmed }}</div>
+    <div style="font-size:12.5px; color:var(--muted); margin-top:6px;">confirmados</div>
+  </div>
+  <div class="card" style="border-top:2px solid #eab308;">
+    <div style="font-size:11.5px; font-weight:600; text-transform:uppercase; letter-spacing:0.08em; color:var(--muted); margin-bottom:10px;">Pendentes</div>
+    <div style="font-size:36px; font-weight:700; color:#eab308; font-family:var(--font-mono); line-height:1;">{{ pending }}</div>
+    <div style="font-size:12.5px; color:var(--muted); margin-top:6px;">aguardando</div>
+  </div>
+  <div class="card" style="border-top:2px solid var(--red);">
+    <div style="font-size:11.5px; font-weight:600; text-transform:uppercase; letter-spacing:0.08em; color:var(--muted); margin-bottom:10px;">Cancelados</div>
+    <div style="font-size:36px; font-weight:700; color:var(--red); font-family:var(--font-mono); line-height:1;">{{ cancelled }}</div>
+    <div style="font-size:12.5px; color:var(--muted); margin-top:6px;">cancelados</div>
+  </div>
+</div>
+
+<!-- Agendamentos do dia -->
+<div class="card">
+  <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:20px;">
+    <div style="font-size:15px; font-weight:700; color:#f1f5f9;">Agenda de Hoje</div>
+    <a href="/appointments" class="btn-ghost" style="font-size:12.5px; padding:7px 14px;">Ver todos</a>
+  </div>
+
+  {% if appointments_today %}
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Horario</th>
+        <th>Cliente</th>
+        <th>Servico</th>
+        <th>Profissional</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for apt in appointments_today %}
+      <tr>
+        <td>
+          <span class="mono" style="font-size:13.5px; color:var(--accent);">
+            {{ apt.starts_at[11:16] if apt.starts_at else '—' }}
+          </span>
+        </td>
+        <td>
+          <div style="font-weight:500;">{{ apt.clients.name if apt.clients else '—' }}</div>
+          <div style="font-size:12px; color:var(--muted);">{{ apt.clients.phone if apt.clients else '' }}</div>
+        </td>
+        <td style="color:var(--muted); font-size:13.5px;">{{ apt.services.name if apt.services else '—' }}</td>
+        <td style="color:var(--muted); font-size:13.5px;">{{ apt.professionals.name if apt.professionals else '—' }}</td>
+        <td>
+          {% if apt.status == 'confirmed' %}<span class="badge-green">Confirmado</span>
+          {% elif apt.status == 'scheduled' %}<span class="badge-yellow">Pendente</span>
+          {% elif apt.status == 'cancelled' %}<span class="badge-red">Cancelado</span>
+          {% elif apt.status == 'completed' %}<span class="badge-blue">Concluido</span>
+          {% else %}<span class="badge-gray">{{ apt.status }}</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div style="text-align:center; padding:48px 0; color:var(--muted);">
+    <svg width="40" height="40" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" style="margin:0 auto 12px; display:block; opacity:0.4;">
+      <rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>
+    </svg>
+    <div style="font-size:14px;">Nenhum agendamento para hoje.</div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

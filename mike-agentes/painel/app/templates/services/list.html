@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block title %}Servicos{% endblock %}
+
+{% block content %}
+<div class="page-header" style="display:flex; align-items:flex-start; justify-content:space-between;">
+  <div>
+    <div class="page-title">Servicos</div>
+    <div class="page-subtitle">{{ services|length }} servico{{ 's' if services|length != 1 else '' }} cadastrado{{ 's' if services|length != 1 else '' }}.</div>
+  </div>
+  <a href="/services/new" class="btn-primary">+ Novo servico</a>
+</div>
+
+<!-- Filtro por profissional -->
+<div class="card" style="margin-bottom:16px; padding:16px 20px;">
+  <form method="get" action="/services" style="display:flex; align-items:center; gap:12px;">
+    <label class="field-label" style="margin:0; white-space:nowrap;">Filtrar por profissional:</label>
+    <select class="input-field" name="professional_id" style="max-width:260px;" onchange="this.form.submit()">
+      <option value="">Todos os profissionais</option>
+      {% for pro in professionals %}
+      <option value="{{ pro.id }}" {% if selected_professional == pro.id %}selected{% endif %}>{{ pro.name }}</option>
+      {% endfor %}
+    </select>
+    {% if selected_professional %}
+    <a href="/services" class="btn-ghost" style="font-size:12.5px; padding:8px 14px;">Limpar</a>
+    {% endif %}
+  </form>
+</div>
+
+<div class="card">
+  {% if services %}
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Servico</th>
+        <th>Profissional</th>
+        <th>Duracao</th>
+        <th>Preco</th>
+        <th>Status</th>
+        <th>Acoes</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for svc in services %}
+      <tr>
+        <td style="font-weight:600; color:#f1f5f9;">{{ svc.name }}</td>
+        <td style="color:var(--muted); font-size:13.5px;">
+          {{ svc.professionals_list | join(', ') if svc.professionals_list else (svc.professionals.name if svc.professionals else '—') }}
+        </td>
+        <td>
+          <span class="mono" style="font-size:13px; color:var(--accent);">{{ svc.duration_min }}min</span>
+        </td>
+        <td>
+          <span class="mono" style="font-size:13.5px; color:#f1f5f9;">
+            {% if svc.price %}R$ {{ "%.2f"|format(svc.price) }}{% else %}—{% endif %}
+          </span>
+        </td>
+        <td>
+          {% if svc.ativo %}<span class="badge-green">Ativo</span>
+          {% else %}<span class="badge-gray">Inativo</span>{% endif %}
+        </td>
+        <td>
+          <div style="display:flex; gap:8px;">
+            <a href="/services/{{ svc.id }}/edit" class="btn-ghost" style="font-size:12.5px; padding:7px 14px;">Editar</a>
+            <form method="post" action="/services/{{ svc.id }}/toggle" style="display:inline;">
+              {% if svc.ativo %}
+                <input type="hidden" name="is_active" value="false">
+                <button type="submit" class="btn-danger" style="padding:7px 14px; font-size:12.5px;">Desativar</button>
+              {% else %}
+                <input type="hidden" name="is_active" value="true">
+                <button type="submit" class="btn-success" style="padding:7px 14px; font-size:12.5px;">Ativar</button>
+              {% endif %}
+            </form>
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div style="text-align:center; padding:60px 0; color:var(--muted);">
+    <svg width="44" height="44" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" style="margin:0 auto 14px; display:block; opacity:0.35;">
+      <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/>
+      <rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/>
+    </svg>
+    <div style="font-size:15px; font-weight:600; color:#475569; margin-bottom:8px;">Nenhum servico ainda</div>
+    <div style="font-size:13.5px; margin-bottom:20px;">Adicione os servicos que serao oferecidos.</div>
+    <a href="/services/new" class="btn-primary">+ Novo servico</a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

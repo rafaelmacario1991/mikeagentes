@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% block title %}Agenda{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-title">Agenda</div>
+  <div class="page-subtitle">Gerencie os agendamentos confirmados e pendentes.</div>
+</div>
+
+<!-- Filtros -->
+<div class="card" style="margin-bottom:16px; padding:16px 20px;">
+  <form method="get" action="/appointments" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+    <div style="display:flex; align-items:center; gap:8px;">
+      <label class="field-label" style="margin:0;">Data:</label>
+      <input class="input-field" type="date" name="date" value="{{ date_filter }}" style="width:auto;">
+    </div>
+    <div style="display:flex; align-items:center; gap:8px;">
+      <label class="field-label" style="margin:0;">Status:</label>
+      <select class="input-field" name="status" style="width:auto;">
+        <option value="">Todos</option>
+        <option value="scheduled" {% if status_filter == 'scheduled' %}selected{% endif %}>Agendado</option>
+        <option value="confirmed" {% if status_filter == 'confirmed' %}selected{% endif %}>Confirmado</option>
+        <option value="cancelled" {% if status_filter == 'cancelled' %}selected{% endif %}>Cancelado</option>
+        <option value="completed" {% if status_filter == 'completed' %}selected{% endif %}>Concluido</option>
+      </select>
+    </div>
+    <button type="submit" class="btn-primary" style="padding:9px 18px;">Filtrar</button>
+    <a href="/appointments" class="btn-ghost" style="font-size:13px; padding:9px 14px;">Hoje</a>
+  </form>
+</div>
+
+<div class="card">
+  {% if appointments %}
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Horario</th>
+        <th>Cliente</th>
+        <th>Servico</th>
+        <th>Profissional</th>
+        <th>Status</th>
+        <th>Acoes</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for apt in appointments %}
+      <tr>
+        <td>
+          <div class="mono" style="font-size:14px; color:var(--accent); font-weight:600;">
+            {{ apt.scheduled_at[11:16] if apt.scheduled_at else '—' }}
+          </div>
+          {% if apt.services and apt.services.duration_min %}
+          <div class="mono" style="font-size:11.5px; color:var(--muted);">{{ apt.services.duration_min }}min</div>
+          {% endif %}
+        </td>
+        <td>
+          <div style="font-weight:600; color:#f1f5f9;">{{ apt.clients.name if apt.clients else '—' }}</div>
+          <div style="font-size:12px; color:var(--muted); font-family:var(--font-mono);">{{ apt.clients.phone if apt.clients else '' }}</div>
+        </td>
+        <td style="color:var(--muted); font-size:13.5px;">
+          {{ apt.services.name if apt.services else '—' }}
+          {% if apt.services and apt.services.duration_min %}
+          <div style="font-size:12px; color:#475569;">{{ apt.services.duration_min }}min</div>
+          {% endif %}
+        </td>
+        <td style="color:var(--muted); font-size:13.5px;">{{ apt.professionals.name if apt.professionals else '—' }}</td>
+        <td>
+          {% if apt.status == 'confirmed' %}<span class="badge-green">Confirmado</span>
+          {% elif apt.status == 'scheduled' %}<span class="badge-yellow">Agendado</span>
+          {% elif apt.status == 'cancelled' %}<span class="badge-red">Cancelado</span>
+          {% elif apt.status == 'completed' %}<span class="badge-blue">Concluido</span>
+          {% elif apt.status == 'no_show' %}<span class="badge-gray">Nao compareceu</span>
+          {% else %}<span class="badge-gray">{{ apt.status }}</span>
+          {% endif %}
+        </td>
+        <td>
+          <div style="display:flex; gap:6px;">
+            {% if apt.status == 'scheduled' %}
+            <form method="post" action="/appointments/{{ apt.id }}/confirm" style="display:inline;">
+              <button type="submit" class="btn-success" style="padding:6px 12px; font-size:12px;">Confirmar</button>
+            </form>
+            {% endif %}
+            {% if apt.status not in ['cancelled', 'completed', 'no_show'] %}
+            <form method="post" action="/appointments/{{ apt.id }}/cancel" style="display:inline;">
+              <button type="submit" class="btn-danger" style="padding:6px 12px; font-size:12px;">Cancelar</button>
+            </form>
+            {% endif %}
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div style="text-align:center; padding:60px 0; color:var(--muted);">
+    <svg width="44" height="44" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" style="margin:0 auto 14px; display:block; opacity:0.35;">
+      <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>
+    </svg>
+    <div style="font-size:15px; font-weight:600; color:#475569; margin-bottom:6px;">Nenhum agendamento encontrado</div>
+    <div style="font-size:13.5px;">Tente ajustar os filtros de data ou status.</div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
