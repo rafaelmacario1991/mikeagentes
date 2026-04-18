@@ -1,0 +1,434 @@
+{% extends "base.html" %}
+{% block title %}Novo Agendamento{% endblock %}
+{% block page_title %}Novo Agendamento{% endblock %}
+
+{% block content %}
+<style>
+.form-section {
+  margin-bottom: 28px;
+}
+.form-section-title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+.field-row {
+  display: grid;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+.field-row.cols-2 { grid-template-columns: 1fr 1fr; }
+.field-row.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+.field-group { display: flex; flex-direction: column; gap: 6px; }
+.field-label { font-size: 12.5px; font-weight: 600; color: var(--muted); }
+.field-hint { font-size: 11.5px; color: #475569; margin-top: 2px; }
+
+.client-card {
+  background: rgba(34,197,94,0.08);
+  border: 1px solid rgba(34,197,94,0.3);
+  border-radius: 8px;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.client-card-icon {
+  width: 32px; height: 32px;
+  background: rgba(34,197,94,0.15);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.slot-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+.slot-btn {
+  padding: 8px 14px;
+  border-radius: 7px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: var(--font-mono);
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.slot-btn:hover { border-color: var(--accent); color: #93c5fd; background: var(--accent-dim); }
+.slot-btn.selected { background: var(--accent); border-color: var(--accent); color: #fff; }
+.slot-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+</style>
+
+<div class="page-header" style="display:flex; align-items:center; justify-content:space-between;">
+  <div>
+    <div class="page-title">Novo Agendamento</div>
+    <div class="page-subtitle">Cadastro manual pelo operador</div>
+  </div>
+  <a href="/appointments" class="btn-ghost" style="font-size:13px; padding:8px 16px;">
+    ← Voltar para Agenda
+  </a>
+</div>
+
+<div x-data="newAppointment()" x-init="init()">
+
+  <!-- ── Erro global ── -->
+  <template x-if="error">
+    <div style="background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.35); border-radius:8px; padding:12px 16px; margin-bottom:20px; font-size:13.5px; color:#fca5a5;" x-text="error"></div>
+  </template>
+
+  <form @submit.prevent="submit()">
+
+    <!-- ══ Seção 1: Profissional e Serviço ══ -->
+    <div class="card form-section">
+      <div class="form-section-title">Profissional &amp; Serviço</div>
+
+      <div class="field-row cols-2">
+        <!-- Profissional -->
+        <div class="field-group">
+          <label class="field-label">Profissional *</label>
+          <select class="input-field" x-model="profId" @change="onProfChange()" required>
+            <option value="">Selecione...</option>
+            {% for pro in professionals %}
+            <option value="{{ pro.id }}">{{ pro.name }}{% if pro.role %} — {{ pro.role }}{% endif %}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- Serviço -->
+        <div class="field-group">
+          <label class="field-label">Serviço *</label>
+          <select class="input-field" x-model="svcId" :disabled="!profId || loadingSvcs" required>
+            <option value="">
+              <span x-show="!profId">Selecione um profissional primeiro</span>
+              <span x-show="profId && loadingSvcs">Carregando...</span>
+              <span x-show="profId && !loadingSvcs">Selecione o serviço...</span>
+            </option>
+            <template x-for="svc in services" :key="svc.id">
+              <option :value="svc.id" x-text="svc.name + ' (' + svc.duration_min + 'min' + (svc.price ? ' — R$' + parseFloat(svc.price).toFixed(2) : '') + ')'"></option>
+            </template>
+          </select>
+          <template x-if="profId && !loadingSvcs && services.length === 0">
+            <div class="field-hint" style="color:#f87171;">Nenhum serviço ativo para este profissional.</div>
+          </template>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ Seção 2: Data e Horário ══ -->
+    <div class="card form-section">
+      <div class="form-section-title">Data &amp; Horário</div>
+
+      <div class="field-row cols-2">
+        <!-- Data -->
+        <div class="field-group">
+          <label class="field-label">Data *</label>
+          <input type="date" class="input-field mono" x-model="aptDate"
+            :min="today" @change="onDateChange()" required
+            style="font-size:14px;">
+        </div>
+
+        <!-- Horário (hidden — valor definido pelos botões) -->
+        <div class="field-group">
+          <label class="field-label">Horário *</label>
+          <input type="hidden" x-model="aptTime" required>
+
+          <!-- Estado: aguardando profissional + data -->
+          <template x-if="!profId || !aptDate">
+            <div style="background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:14px 16px; font-size:13px; color:var(--muted);">
+              Selecione profissional e data para ver horários.
+            </div>
+          </template>
+
+          <!-- Carregando slots -->
+          <template x-if="profId && aptDate && loadingSlots">
+            <div style="background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:14px 16px; font-size:13px; color:var(--muted);">
+              Carregando horários...
+            </div>
+          </template>
+
+          <!-- Sem slots -->
+          <template x-if="profId && aptDate && !loadingSlots && slots.length === 0">
+            <div style="background:rgba(239,68,68,0.06); border:1px solid rgba(239,68,68,0.25); border-radius:8px; padding:14px 16px; font-size:13px; color:#fca5a5;">
+              Sem horários disponíveis nesta data.
+            </div>
+          </template>
+
+          <!-- Grade de slots -->
+          <template x-if="profId && aptDate && !loadingSlots && slots.length > 0">
+            <div class="slot-grid">
+              <template x-for="slot in slots" :key="slot">
+                <button type="button" class="slot-btn" :class="aptTime === slot ? 'selected' : ''"
+                  @click="aptTime = slot" x-text="slot"></button>
+              </template>
+            </div>
+          </template>
+        </div>
+      </div>
+
+      <!-- Horário selecionado -->
+      <template x-if="aptTime">
+        <div style="margin-top:4px; font-size:13px; color:var(--green);">
+          ✓ Horário selecionado: <strong x-text="aptTime" style="font-family:var(--font-mono);"></strong>
+        </div>
+      </template>
+    </div>
+
+    <!-- ══ Seção 3: Cliente ══ -->
+    <div class="card form-section">
+      <div class="form-section-title">Cliente</div>
+
+      <!-- Busca por telefone -->
+      <div class="field-row cols-2">
+        <div class="field-group">
+          <label class="field-label">Telefone / WhatsApp *</label>
+          <div style="display:flex; gap:8px;">
+            <input type="tel" class="input-field mono" x-model="clientPhone"
+              placeholder="81999990000"
+              @keydown.enter.prevent="searchClient()"
+              style="font-size:14px; flex:1;">
+            <button type="button" class="btn-ghost" @click="searchClient()"
+              :disabled="!clientPhone.trim() || searchingClient"
+              style="padding:0 16px; font-size:13px; white-space:nowrap;">
+              <span x-show="!searchingClient">Buscar</span>
+              <span x-show="searchingClient">...</span>
+            </button>
+          </div>
+          <div class="field-hint">Digite o telefone e clique em Buscar.</div>
+        </div>
+
+        <!-- Nome — aparece após busca -->
+        <div class="field-group" x-show="clientSearched">
+          <label class="field-label">
+            Nome do Cliente *
+            <template x-if="clientFound">
+              <span style="color:var(--green); font-weight:400; margin-left:4px;">(cliente existente)</span>
+            </template>
+            <template x-if="clientSearched && !clientFound">
+              <span style="color:#eab308; font-weight:400; margin-left:4px;">(novo cliente)</span>
+            </template>
+          </label>
+          <input type="text" class="input-field" x-model="clientName"
+            :readonly="clientFound"
+            :style="clientFound ? 'opacity:0.7; cursor:default;' : ''"
+            placeholder="Nome completo"
+            style="font-size:14px;">
+        </div>
+      </div>
+
+      <!-- Card: cliente encontrado -->
+      <template x-if="clientFound">
+        <div class="client-card">
+          <div class="client-card-icon">
+            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="color:var(--green);">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+            </svg>
+          </div>
+          <div>
+            <div style="font-size:13.5px; font-weight:600; color:var(--green);" x-text="clientName"></div>
+            <div style="font-size:12px; color:var(--muted); font-family:var(--font-mono);" x-text="clientPhone"></div>
+          </div>
+          <button type="button" @click="resetClient()"
+            style="margin-left:auto; font-size:12px; color:var(--muted); background:none; border:none; cursor:pointer; padding:4px 8px;">
+            Trocar
+          </button>
+        </div>
+      </template>
+    </div>
+
+    <!-- ══ Seção 4: Observações ══ -->
+    <div class="card form-section">
+      <div class="form-section-title">Observações</div>
+      <div class="field-group">
+        <label class="field-label">Observações internas (opcional)</label>
+        <textarea class="input-field" x-model="notes" rows="3"
+          placeholder="Ex.: cliente pediu produto específico, alerta de alergia, etc."
+          style="resize:vertical; font-size:13.5px; line-height:1.5;"></textarea>
+      </div>
+    </div>
+
+    <!-- ══ Botões ══ -->
+    <div style="display:flex; gap:12px; align-items:center; justify-content:flex-end;">
+      <a href="/appointments" class="btn-ghost" style="font-size:13.5px; padding:10px 20px;">Cancelar</a>
+      <button type="submit" class="btn-primary" style="padding:10px 24px; font-size:14px;"
+        :disabled="saving || !isFormValid()">
+        <span x-show="!saving">Criar Agendamento</span>
+        <span x-show="saving" x-cloak>Salvando...</span>
+      </button>
+    </div>
+
+  </form>
+</div><!-- /x-data -->
+{% endblock %}
+
+{% block scripts %}
+<script>
+function newAppointment() {
+  return {
+    // Profissional / Serviço
+    profId: '',
+    services: [],
+    loadingSvcs: false,
+    svcId: '',
+
+    // Data / Horário
+    aptDate: '',
+    slots: [],
+    loadingSlots: false,
+    aptTime: '',
+    today: '{{ today }}',
+
+    // Cliente
+    clientPhone: '',
+    clientName: '',
+    clientId: '',
+    clientFound: false,
+    clientSearched: false,
+    searchingClient: false,
+
+    // Geral
+    notes: '',
+    saving: false,
+    error: '',
+
+    init() {
+      this.aptDate = '';
+      const params = new URLSearchParams(window.location.search);
+      const err = params.get('error');
+      if (err === 'nome_obrigatorio') this.error = 'Nome do cliente é obrigatório.';
+      else if (err === 'servico_invalido') this.error = 'Serviço inválido. Tente novamente.';
+      else if (err) this.error = 'Erro ao criar agendamento.';
+    },
+
+    // ── Profissional mudou ──
+    async onProfChange() {
+      this.services = [];
+      this.svcId = '';
+      this.slots = [];
+      this.aptTime = '';
+      if (!this.profId) return;
+      this.loadingSvcs = true;
+      try {
+        const res = await fetch(`/appointments/api/services?professional_id=${this.profId}`);
+        this.services = await res.json();
+      } catch(e) {
+        this.error = 'Erro ao carregar serviços.';
+      } finally {
+        this.loadingSvcs = false;
+      }
+      // Recarrega slots se já tem data
+      if (this.aptDate) await this.loadSlots();
+    },
+
+    // ── Data mudou ──
+    async onDateChange() {
+      this.slots = [];
+      this.aptTime = '';
+      if (!this.aptDate) return;
+      await this.loadSlots();
+    },
+
+    async loadSlots() {
+      if (!this.profId || !this.aptDate) return;
+      this.loadingSlots = true;
+      try {
+        const res = await fetch(`/appointments/api/slots?professional_id=${this.profId}&apt_date=${this.aptDate}`);
+        this.slots = await res.json();
+      } catch(e) {
+        this.error = 'Erro ao carregar horários.';
+      } finally {
+        this.loadingSlots = false;
+      }
+    },
+
+    // ── Busca de cliente ──
+    async searchClient() {
+      const q = this.clientPhone.trim();
+      if (!q) return;
+      this.searchingClient = true;
+      try {
+        const res = await fetch(`/appointments/api/clients/search?q=${encodeURIComponent(q)}`);
+        const data = await res.json();
+        this.clientSearched = true;
+        if (data.length > 0) {
+          this.clientFound = true;
+          this.clientId = data[0].id;
+          this.clientName = data[0].name;
+          this.clientPhone = data[0].phone;
+        } else {
+          this.clientFound = false;
+          this.clientId = '';
+          this.clientName = '';
+        }
+      } catch(e) {
+        this.error = 'Erro ao buscar cliente.';
+      } finally {
+        this.searchingClient = false;
+      }
+    },
+
+    resetClient() {
+      this.clientFound = false;
+      this.clientSearched = false;
+      this.clientId = '';
+      this.clientName = '';
+      this.clientPhone = '';
+    },
+
+    isFormValid() {
+      return (
+        this.profId &&
+        this.svcId &&
+        this.aptDate &&
+        this.aptTime &&
+        this.clientPhone.trim() &&
+        (this.clientFound || this.clientName.trim())
+      );
+    },
+
+    async submit() {
+      this.error = '';
+      if (!this.isFormValid()) {
+        this.error = 'Preencha todos os campos obrigatórios e selecione um horário.';
+        return;
+      }
+      this.saving = true;
+      try {
+        // Monta FormData para o POST convencional
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '/appointments/new';
+        const fields = {
+          professional_id: this.profId,
+          service_id: this.svcId,
+          apt_date: this.aptDate,
+          apt_time: this.aptTime,
+          client_phone: this.clientPhone,
+          client_name: this.clientName,
+          notes: this.notes,
+        };
+        for (const [k, v] of Object.entries(fields)) {
+          const inp = document.createElement('input');
+          inp.type = 'hidden';
+          inp.name = k;
+          inp.value = v || '';
+          form.appendChild(inp);
+        }
+        document.body.appendChild(form);
+        form.submit();
+      } catch(e) {
+        this.error = 'Erro ao salvar agendamento.';
+        this.saving = false;
+      }
+    }
+  }
+}
+</script>
+{% endblock %}

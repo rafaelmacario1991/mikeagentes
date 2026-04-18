@@ -1,4 +1,6 @@
-from app.services.supabase_client import get_anon_client, get_admin_client
+import jwt
+from app.services.supabase_client import get_anon_client
+from app.config import settings
 
 
 def login_with_password(email: str, password: str) -> tuple[str, str]:
@@ -14,24 +16,19 @@ def login_with_password(email: str, password: str) -> tuple[str, str]:
 
 def get_user_from_token(token: str) -> dict:
     """
-    Decodifica o payload do JWT sem verificação de assinatura.
-    O token foi emitido pelo Supabase em um login válido — confiamos nele.
-    Extrai 'sub' (user_id) e 'email' do payload.
+    Valida assinatura do JWT Supabase e extrai 'sub' (user_id) e 'email'.
+    Lança jwt.InvalidTokenError em caso de token inválido ou expirado.
     """
-    import base64
-    import json
+    payload = jwt.decode(
+        token,
+        settings.SUPABASE_JWT_SECRET,
+        algorithms=["HS256"],
+        audience="authenticated",
+        options={"verify_exp": True},
+    )
 
-    parts = token.split(".")
-    if len(parts) != 3:
-        raise ValueError("Formato JWT inválido")
-
-    # Adiciona padding Base64 se necessário
-    payload_b64 = parts[1]
-    payload_b64 += "=" * (4 - len(payload_b64) % 4)
-    payload = json.loads(base64.urlsafe_b64decode(payload_b64))
-
-    email = payload.get("email") or ""
     sub = payload.get("sub") or ""
+    email = payload.get("email") or ""
 
     if not sub:
         raise ValueError("Token sem sub")

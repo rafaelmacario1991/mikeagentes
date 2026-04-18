@@ -41,7 +41,8 @@
             <form method="post" action="/professionals/{{ pro.id }}/toggle" style="display:inline;">
               {% if pro.ativo %}
                 <input type="hidden" name="is_active" value="false">
-                <button type="submit" class="btn-danger" style="padding:7px 14px; font-size:12.5px;">Desativar</button>
+                <button type="submit" class="btn-danger" style="padding:7px 14px; font-size:12.5px;"
+                  onclick="return confirm('Desativar {{ pro.name }}?')">Desativar</button>
               {% else %}
                 <input type="hidden" name="is_active" value="true">
                 <button type="submit" class="btn-success" style="padding:7px 14px; font-size:12.5px;">Ativar</button>

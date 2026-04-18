@@ -7,11 +7,17 @@
     <div class="page-title">Tenants</div>
     <div class="page-subtitle">{{ tenants|length }} tenant{{ 's' if tenants|length != 1 else '' }} cadastrado{{ 's' if tenants|length != 1 else '' }}.</div>
   </div>
-  {% if impersonating %}
-  <a href="/admin/switch-exit" class="btn-ghost" style="border-color:rgba(234,179,8,0.3); color:#eab308;">
-    Sair da simulacao
-  </a>
-  {% endif %}
+  <div style="display:flex; gap:10px; align-items:center;">
+    {% if impersonating %}
+    <a href="/admin/switch-exit" class="btn-ghost" style="border-color:rgba(234,179,8,0.3); color:#eab308;">
+      Sair da simulacao
+    </a>
+    {% endif %}
+    <a href="/admin/tenants/new" class="btn-primary" style="display:inline-flex; align-items:center; gap:7px; text-decoration:none;">
+      <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Novo Tenant
+    </a>
+  </div>
 </div>
 
 <div class="card">
@@ -48,7 +54,8 @@
             <form method="post" action="/admin/tenants/{{ tenant.id }}/toggle" style="display:inline;">
               {% if tenant.ativo %}
                 <input type="hidden" name="is_active" value="false">
-                <button type="submit" class="btn-danger" style="padding:6px 12px; font-size:12px;">Desativar</button>
+                <button type="submit" class="btn-danger" style="padding:6px 12px; font-size:12px;"
+                  onclick="return confirm('Desativar o tenant {{ tenant.name }}?')">Desativar</button>
               {% else %}
                 <input type="hidden" name="is_active" value="true">
                 <button type="submit" class="btn-success" style="padding:6px 12px; font-size:12px;">Ativar</button>

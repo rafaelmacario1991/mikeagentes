@@ -1,104 +1,331 @@
 {% extends "base.html" %}
 {% block title %}Agenda{% endblock %}
+{% block page_title %}Agenda{% endblock %}
 
 {% block content %}
-<div class="page-header">
-  <div class="page-title">Agenda</div>
-  <div class="page-subtitle">Gerencie os agendamentos confirmados e pendentes.</div>
+<style>
+.period-btn {
+  padding: 7px 14px;
+  border-radius: 7px;
+  font-size: 12.5px;
+  font-weight: 600;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: var(--font-sans);
+  white-space: nowrap;
+}
+.period-btn:hover { background: rgba(255,255,255,0.06); color: var(--text); }
+.period-btn.active { background: var(--accent-dim); border-color: var(--accent); color: #93c5fd; }
+.date-input {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 7px 12px;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.15s;
+  width: 138px;
+}
+.date-input:focus { border-color: var(--accent); }
+.date-input::-webkit-calendar-picker-indicator { filter: invert(0.6); cursor: pointer; }
+.day-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 0 8px;
+}
+.day-divider span {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+  white-space: nowrap;
+}
+.day-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+</style>
+
+<div class="page-header" style="display:flex; align-items:flex-start; justify-content:space-between;">
+  <div>
+    <div class="page-title">Agenda</div>
+    <div class="page-subtitle">{{ period_label }}</div>
+  </div>
+  <a href="/appointments/new" class="btn-primary" style="font-size:13px; padding:9px 18px; white-space:nowrap; margin-top:2px;">
+    + Novo Agendamento
+  </a>
 </div>
 
-<!-- Filtros -->
-<div class="card" style="margin-bottom:16px; padding:16px 20px;">
-  <form method="get" action="/appointments" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
-    <div style="display:flex; align-items:center; gap:8px;">
-      <label class="field-label" style="margin:0;">Data:</label>
-      <input class="input-field" type="date" name="date" value="{{ date_filter }}" style="width:auto;">
+<div x-data="agendaCtrl()" x-init="init()">
+
+  <!-- ── Barra de Filtros ── -->
+  <div style="background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:14px 18px; margin-bottom:20px; display:flex; align-items:center; flex-wrap:wrap; gap:12px;">
+
+    <!-- Quick filters -->
+    <div style="display:flex; gap:6px; flex-wrap:wrap;">
+      <button class="period-btn" :class="isQuick('today')"    @click="quick('today')">Hoje</button>
+      <button class="period-btn" :class="isQuick('tomorrow')" @click="quick('tomorrow')">Amanhã</button>
+      <button class="period-btn" :class="isQuick('week')"     @click="quick('week')">Esta Semana</button>
+      <button class="period-btn" :class="isQuick('month')"    @click="quick('month')">Este Mês</button>
     </div>
+
+    <!-- Separador -->
+    <div style="width:1px; height:28px; background:var(--border); flex-shrink:0;"></div>
+
+    <!-- Datas -->
+    <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+      <span style="font-size:12px; color:var(--muted); font-weight:600;">De</span>
+      <input type="date" class="date-input" x-model="s">
+      <span style="font-size:12px; color:var(--muted); font-weight:600;">até</span>
+      <input type="date" class="date-input" x-model="e">
+      <button class="period-btn active" @click="apply()" style="border-color:var(--accent); color:#93c5fd;">
+        <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" style="display:inline; vertical-align:middle; margin-right:3px;"><polyline points="9 18 15 12 9 6"/></svg>
+        Filtrar
+      </button>
+    </div>
+
+    <!-- Separador -->
+    <div style="width:1px; height:28px; background:var(--border); flex-shrink:0;"></div>
+
+    <!-- Status -->
     <div style="display:flex; align-items:center; gap:8px;">
-      <label class="field-label" style="margin:0;">Status:</label>
-      <select class="input-field" name="status" style="width:auto;">
+      <span style="font-size:12px; color:var(--muted); font-weight:600;">Status</span>
+      <select class="date-input" x-model="statusVal" style="width:auto; padding-right:8px;" @change="apply()">
         <option value="">Todos</option>
-        <option value="scheduled" {% if status_filter == 'scheduled' %}selected{% endif %}>Agendado</option>
-        <option value="confirmed" {% if status_filter == 'confirmed' %}selected{% endif %}>Confirmado</option>
-        <option value="cancelled" {% if status_filter == 'cancelled' %}selected{% endif %}>Cancelado</option>
-        <option value="completed" {% if status_filter == 'completed' %}selected{% endif %}>Concluido</option>
+        <option value="scheduled">Agendado</option>
+        <option value="confirmed">Confirmado</option>
+        <option value="cancelled">Cancelado</option>
+        <option value="completed">Concluído</option>
+        <option value="no_show">Não compareceu</option>
       </select>
     </div>
-    <button type="submit" class="btn-primary" style="padding:9px 18px;">Filtrar</button>
-    <a href="/appointments" class="btn-ghost" style="font-size:13px; padding:9px 14px;">Hoje</a>
-  </form>
-</div>
-
-<div class="card">
-  {% if appointments %}
-  <table class="data-table">
-    <thead>
-      <tr>
-        <th>Horario</th>
-        <th>Cliente</th>
-        <th>Servico</th>
-        <th>Profissional</th>
-        <th>Status</th>
-        <th>Acoes</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for apt in appointments %}
-      <tr>
-        <td>
-          <div class="mono" style="font-size:14px; color:var(--accent); font-weight:600;">
-            {{ apt.scheduled_at[11:16] if apt.scheduled_at else '—' }}
-          </div>
-          {% if apt.services and apt.services.duration_min %}
-          <div class="mono" style="font-size:11.5px; color:var(--muted);">{{ apt.services.duration_min }}min</div>
-          {% endif %}
-        </td>
-        <td>
-          <div style="font-weight:600; color:#f1f5f9;">{{ apt.clients.name if apt.clients else '—' }}</div>
-          <div style="font-size:12px; color:var(--muted); font-family:var(--font-mono);">{{ apt.clients.phone if apt.clients else '' }}</div>
-        </td>
-        <td style="color:var(--muted); font-size:13.5px;">
-          {{ apt.services.name if apt.services else '—' }}
-          {% if apt.services and apt.services.duration_min %}
-          <div style="font-size:12px; color:#475569;">{{ apt.services.duration_min }}min</div>
-          {% endif %}
-        </td>
-        <td style="color:var(--muted); font-size:13.5px;">{{ apt.professionals.name if apt.professionals else '—' }}</td>
-        <td>
-          {% if apt.status == 'confirmed' %}<span class="badge-green">Confirmado</span>
-          {% elif apt.status == 'scheduled' %}<span class="badge-yellow">Agendado</span>
-          {% elif apt.status == 'cancelled' %}<span class="badge-red">Cancelado</span>
-          {% elif apt.status == 'completed' %}<span class="badge-blue">Concluido</span>
-          {% elif apt.status == 'no_show' %}<span class="badge-gray">Nao compareceu</span>
-          {% else %}<span class="badge-gray">{{ apt.status }}</span>
-          {% endif %}
-        </td>
-        <td>
-          <div style="display:flex; gap:6px;">
-            {% if apt.status == 'scheduled' %}
-            <form method="post" action="/appointments/{{ apt.id }}/confirm" style="display:inline;">
-              <button type="submit" class="btn-success" style="padding:6px 12px; font-size:12px;">Confirmar</button>
-            </form>
-            {% endif %}
-            {% if apt.status not in ['cancelled', 'completed', 'no_show'] %}
-            <form method="post" action="/appointments/{{ apt.id }}/cancel" style="display:inline;">
-              <button type="submit" class="btn-danger" style="padding:6px 12px; font-size:12px;">Cancelar</button>
-            </form>
-            {% endif %}
-          </div>
-        </td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-  {% else %}
-  <div style="text-align:center; padding:60px 0; color:var(--muted);">
-    <svg width="44" height="44" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" style="margin:0 auto 14px; display:block; opacity:0.35;">
-      <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>
-    </svg>
-    <div style="font-size:15px; font-weight:600; color:#475569; margin-bottom:6px;">Nenhum agendamento encontrado</div>
-    <div style="font-size:13.5px;">Tente ajustar os filtros de data ou status.</div>
   </div>
-  {% endif %}
-</div>
+
+  <!-- ── Tabela ── -->
+  <div class="card">
+    {% if appointments %}
+
+      {% if multi_day %}
+        <!-- Agrupado por dia -->
+        {% for group in appointments_grouped %}
+          <div class="day-divider">
+            <span>
+              {% set p = group.date.split('-') %}
+              {{ p[2] }}/{{ p[1] }}/{{ p[0] }}
+              <span style="color:var(--muted); font-weight:500; font-size:11px; margin-left:8px;">{{ group.rows|length }} agendamento{{ 's' if group.rows|length != 1 else '' }}</span>
+            </span>
+          </div>
+          <table class="data-table" style="margin-bottom:12px;">
+            <thead>
+              <tr>
+                <th>Horário</th>
+                <th>Cliente</th>
+                <th>Serviço</th>
+                <th>Profissional</th>
+                <th>Status</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for apt in group.rows %}
+              <tr>
+                <td>
+                  <div class="mono" style="font-size:14px; color:var(--accent); font-weight:600;">
+                    {{ apt.display_time if apt.display_time else '—' }}
+                  </div>
+                  {% if apt.services and apt.services.duration_min %}
+                  <div class="mono" style="font-size:11.5px; color:var(--muted);">{{ apt.services.duration_min }}min</div>
+                  {% endif %}
+                </td>
+                <td>
+                  <div style="font-weight:600; color:#f1f5f9;">{{ apt.clients.name if apt.clients else '—' }}</div>
+                  <div style="font-size:12px; color:var(--muted); font-family:var(--font-mono);">{{ apt.clients.phone if apt.clients else '' }}</div>
+                </td>
+                <td style="color:var(--muted); font-size:13.5px;">{{ apt.services.name if apt.services else '—' }}</td>
+                <td style="color:var(--muted); font-size:13.5px;">{{ apt.professionals.name if apt.professionals else '—' }}</td>
+                <td>
+                  {% if apt.status == 'confirmed' %}<span class="badge-green">Confirmado</span>
+                  {% elif apt.status == 'scheduled' %}<span class="badge-yellow">Agendado</span>
+                  {% elif apt.status == 'cancelled' %}<span class="badge-red">Cancelado</span>
+                  {% elif apt.status == 'completed' %}<span class="badge-blue">Concluído</span>
+                  {% elif apt.status == 'no_show' %}<span class="badge-gray">No-show</span>
+                  {% else %}<span class="badge-gray">{{ apt.status }}</span>
+                  {% endif %}
+                </td>
+                <td>
+                  <div style="display:flex; gap:6px;">
+                    {% if apt.status == 'scheduled' %}
+                    <form method="post" action="/appointments/{{ apt.id }}/confirm?start={{ date_from }}&end={{ date_to }}" style="display:inline;">
+                      <button type="submit" class="btn-success" style="padding:6px 12px; font-size:12px;">Confirmar</button>
+                    </form>
+                    {% endif %}
+                    {% if apt.status not in ['cancelled', 'completed', 'no_show'] %}
+                    <form method="post" action="/appointments/{{ apt.id }}/cancel?start={{ date_from }}&end={{ date_to }}" style="display:inline;">
+                      <button type="submit" class="btn-danger" style="padding:6px 12px; font-size:12px;"
+                        onclick="return confirm('Cancelar este agendamento?')">Cancelar</button>
+                    </form>
+                    {% endif %}
+                  </div>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        {% endfor %}
+
+      {% else %}
+        <!-- Dia único — lista plana -->
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Horário</th>
+              <th>Cliente</th>
+              <th>Serviço</th>
+              <th>Profissional</th>
+              <th>Status</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for apt in appointments %}
+            <tr>
+              <td>
+                <div class="mono" style="font-size:14px; color:var(--accent); font-weight:600;">
+                  {{ apt.display_time if apt.display_time else '—' }}
+                </div>
+                {% if apt.services and apt.services.duration_min %}
+                <div class="mono" style="font-size:11.5px; color:var(--muted);">{{ apt.services.duration_min }}min</div>
+                {% endif %}
+              </td>
+              <td>
+                <div style="font-weight:600; color:#f1f5f9;">{{ apt.clients.name if apt.clients else '—' }}</div>
+                <div style="font-size:12px; color:var(--muted); font-family:var(--font-mono);">{{ apt.clients.phone if apt.clients else '' }}</div>
+              </td>
+              <td style="color:var(--muted); font-size:13.5px;">
+                {{ apt.services.name if apt.services else '—' }}
+              </td>
+              <td style="color:var(--muted); font-size:13.5px;">{{ apt.professionals.name if apt.professionals else '—' }}</td>
+              <td>
+                {% if apt.status == 'confirmed' %}<span class="badge-green">Confirmado</span>
+                {% elif apt.status == 'scheduled' %}<span class="badge-yellow">Agendado</span>
+                {% elif apt.status == 'cancelled' %}<span class="badge-red">Cancelado</span>
+                {% elif apt.status == 'completed' %}<span class="badge-blue">Concluído</span>
+                {% elif apt.status == 'no_show' %}<span class="badge-gray">No-show</span>
+                {% else %}<span class="badge-gray">{{ apt.status }}</span>
+                {% endif %}
+              </td>
+              <td>
+                <div style="display:flex; gap:6px;">
+                  {% if apt.status == 'scheduled' %}
+                  <form method="post" action="/appointments/{{ apt.id }}/confirm?start={{ date_from }}&end={{ date_to }}" style="display:inline;">
+                    <button type="submit" class="btn-success" style="padding:6px 12px; font-size:12px;">Confirmar</button>
+                  </form>
+                  {% endif %}
+                  {% if apt.status not in ['cancelled', 'completed', 'no_show'] %}
+                  <form method="post" action="/appointments/{{ apt.id }}/cancel?start={{ date_from }}&end={{ date_to }}" style="display:inline;">
+                    <button type="submit" class="btn-danger" style="padding:6px 12px; font-size:12px;"
+                      onclick="return confirm('Cancelar este agendamento?')">Cancelar</button>
+                  </form>
+                  {% endif %}
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% endif %}
+
+    {% else %}
+      <div style="text-align:center; padding:60px 0; color:var(--muted);">
+        <svg width="44" height="44" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" style="margin:0 auto 14px; display:block; opacity:0.35;">
+          <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>
+        </svg>
+        <div style="font-size:15px; font-weight:600; color:#475569; margin-bottom:6px;">Nenhum agendamento encontrado</div>
+        <div style="font-size:13.5px;">Tente ajustar o período ou o filtro de status.</div>
+      </div>
+    {% endif %}
+  </div>
+
+</div><!-- /x-data -->
+{% endblock %}
+
+{% block scripts %}
+<script>
+function agendaCtrl() {
+  return {
+    s: '{{ date_from }}',
+    e: '{{ date_to }}',
+    statusVal: '{{ status_filter or "" }}',
+
+    init() {
+      this.s = '{{ date_from }}';
+      this.e = '{{ date_to }}';
+      this.statusVal = '{{ status_filter or "" }}';
+    },
+
+    apply() {
+      if (!this.s || !this.e) return;
+      if (this.s > this.e) { [this.s, this.e] = [this.e, this.s]; }
+      let url = `/appointments?start=${this.s}&end=${this.e}`;
+      if (this.statusVal) url += `&status=${this.statusVal}`;
+      window.location.href = url;
+    },
+
+    quick(type) {
+      const today = new Date();
+      let from, to;
+      if (type === 'today') {
+        from = to = this._fmt(today);
+      } else if (type === 'tomorrow') {
+        const t = new Date(today); t.setDate(t.getDate() + 1);
+        from = to = this._fmt(t);
+      } else if (type === 'week') {
+        const mon = new Date(today);
+        mon.setDate(today.getDate() - today.getDay() + (today.getDay() === 0 ? -6 : 1));
+        const sun = new Date(mon); sun.setDate(mon.getDate() + 6);
+        from = this._fmt(mon); to = this._fmt(sun);
+      } else if (type === 'month') {
+        from = this._fmt(new Date(today.getFullYear(), today.getMonth(), 1));
+        to   = this._fmt(new Date(today.getFullYear(), today.getMonth() + 1, 0));
+      }
+      this.s = from; this.e = to;
+      this.apply();
+    },
+
+    isQuick(type) {
+      const today = new Date();
+      let from, to;
+      if (type === 'today') { from = to = this._fmt(today); }
+      else if (type === 'tomorrow') { const t = new Date(today); t.setDate(t.getDate()+1); from = to = this._fmt(t); }
+      else if (type === 'week') {
+        const mon = new Date(today);
+        mon.setDate(today.getDate() - today.getDay() + (today.getDay() === 0 ? -6 : 1));
+        const sun = new Date(mon); sun.setDate(mon.getDate()+6);
+        from = this._fmt(mon); to = this._fmt(sun);
+      } else if (type === 'month') {
+        from = this._fmt(new Date(today.getFullYear(), today.getMonth(), 1));
+        to   = this._fmt(new Date(today.getFullYear(), today.getMonth()+1, 0));
+      }
+      return (this.s === from && this.e === to) ? 'active' : '';
+    },
+
+    _fmt(d) {
+      // Usa data LOCAL para evitar bug de fuso: toISOString() usa UTC
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    }
+  }
+}
+</script>
 {% endblock %}
