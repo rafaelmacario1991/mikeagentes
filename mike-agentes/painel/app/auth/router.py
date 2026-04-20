@@ -24,14 +24,16 @@ async def login_post(request: Request, email: str = Form(...), password: str = F
             status_code=401,
         )
 
-    redirect = RedirectResponse(url="/dashboard", status_code=302)
+    is_admin = email.lower() == settings.ADMIN_EMAIL.lower()
+    redirect_url = "/admin/tenants" if is_admin else "/dashboard"
+    redirect = RedirectResponse(url=redirect_url, status_code=302)
     redirect.set_cookie(
         key="access_token",
         value=access_token,
         httponly=True,
         secure=settings.is_production,
         samesite="lax",
-        max_age=3600,
+        max_age=28800,
     )
     return redirect
 

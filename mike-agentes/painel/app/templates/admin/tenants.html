@@ -51,6 +51,9 @@
             <a href="/admin/switch/{{ tenant.id }}" class="btn-ghost" style="font-size:12px; padding:6px 12px;">
               Acessar
             </a>
+            <a href="/admin/tenants/{{ tenant.id }}/agent" class="btn-ghost" style="font-size:12px; padding:6px 12px; color:#94a3b8;">
+              Config Agente
+            </a>
             <form method="post" action="/admin/tenants/{{ tenant.id }}/toggle" style="display:inline;">
               {% if tenant.ativo %}
                 <input type="hidden" name="is_active" value="false">

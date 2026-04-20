@@ -36,13 +36,13 @@ def get_service(service_id: str, tenant_id: str) -> dict | None:
         .select("*")
         .eq("id", service_id)
         .eq("tenant_id", tenant_id)
-        .maybe_single()
+        .limit(1)
         .execute()
     )
-    return result.data
+    return result.data[0] if result.data else None
 
 
-def create_service(tenant_id: str, professional_id: str, name: str, duration_minutes: int, price: float) -> dict:
+def create_service(tenant_id: str, professional_id: str, name: str, duration_minutes: int, price: float, description: str = "", payment_types: str = "") -> dict:
     client = get_admin_client()
     result = client.table("services").insert({
         "tenant_id": tenant_id,
@@ -50,18 +50,22 @@ def create_service(tenant_id: str, professional_id: str, name: str, duration_min
         "name": name,
         "duration_min": duration_minutes,
         "price": price,
+        "description": description or None,
+        "payment_types": payment_types or None,
         "ativo": True,
     }).execute()
     return result.data[0]
 
 
-def update_service(service_id: str, tenant_id: str, name: str, duration_minutes: int, price: float, professional_id: str) -> None:
+def update_service(service_id: str, tenant_id: str, name: str, duration_minutes: int, price: float, professional_id: str, description: str = "", payment_types: str = "") -> None:
     client = get_admin_client()
     client.table("services").update({
         "name": name,
         "duration_min": duration_minutes,
         "price": price,
         "professional_id": professional_id,
+        "description": description or None,
+        "payment_types": payment_types or None,
     }).eq("id", service_id).eq("tenant_id", tenant_id).execute()
 
 
@@ -72,6 +76,8 @@ def sync_service_professionals(
     duration_min: int,
     price: float,
     professional_ids: list[str],
+    description: str = "",
+    payment_types: str = "",
 ) -> None:
     """Sincroniza um serviço (por nome) entre múltiplos profissionais.
 
@@ -82,10 +88,11 @@ def sync_service_professionals(
     client = get_admin_client()
 
     # Descobre o nome antigo do serviço para encontrar todos os registros irmãos
-    current = (
+    _cur_res = (
         client.table("services").select("name, professional_id")
-        .eq("id", service_id).maybe_single().execute().data
+        .eq("id", service_id).limit(1).execute()
     )
+    current = _cur_res.data[0] if _cur_res.data else None
     if not current:
         return
     old_name = current["name"]
@@ -101,10 +108,11 @@ def sync_service_professionals(
     for pro_id, svc_id in existing.items():
         if pro_id in professional_ids:
             client.table("services").update({
-                "name": name, "duration_min": duration_min, "price": price, "ativo": True,
+                "name": name, "duration_min": duration_min, "price": price,
+                "description": description or None, "payment_types": payment_types or None,
+                "ativo": True,
             }).eq("id", svc_id).execute()
         else:
-            # Profissional desmarcado → desativa
             client.table("services").update({"ativo": False}).eq("id", svc_id).execute()
 
     # Cria registros para profissionais recém-selecionados
@@ -116,6 +124,8 @@ def sync_service_professionals(
                 "name": name,
                 "duration_min": duration_min,
                 "price": price,
+                "description": description or None,
+                "payment_types": payment_types or None,
                 "ativo": True,
             }).execute()
 

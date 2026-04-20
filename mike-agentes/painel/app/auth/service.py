@@ -16,19 +16,19 @@ def login_with_password(email: str, password: str) -> tuple[str, str]:
 
 def get_user_from_token(token: str) -> dict:
     """
-    Valida assinatura do JWT Supabase e extrai 'sub' (user_id) e 'email'.
-    Lança jwt.InvalidTokenError em caso de token inválido ou expirado.
+    Valida o token via Supabase Auth API.
+    Compatível com ES256 e HS256 — independente do algoritmo do JWT.
+    Lança Exception se token inválido ou expirado.
     """
-    payload = jwt.decode(
-        token,
-        settings.SUPABASE_JWT_SECRET,
-        algorithms=["HS256"],
-        audience="authenticated",
-        options={"verify_exp": True},
-    )
+    client = get_anon_client()
+    response = client.auth.get_user(token)
 
-    sub = payload.get("sub") or ""
-    email = payload.get("email") or ""
+    if not response or not response.user:
+        raise ValueError("Token inválido")
+
+    user = response.user
+    sub = str(user.id) if user.id else ""
+    email = user.email or ""
 
     if not sub:
         raise ValueError("Token sem sub")

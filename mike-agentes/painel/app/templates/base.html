@@ -15,7 +15,7 @@
       --surface-2: #1a2540;
       --border: rgba(255,255,255,0.07);
       --accent: #3b82f6;
-      --accent-dim: rgba(59,130,246,0.12);
+      --accent-dim: rgba(59,130,246,0.10);
       --green: #22c55e;
       --red: #ef4444;
       --text: #e2e8f0;
@@ -25,257 +25,306 @@
     }
     *, *::before, *::after { box-sizing: border-box; }
     html, body { height: 100%; margin: 0; }
-    body {
-      font-family: var(--font-sans);
-      background: var(--bg);
-      color: var(--text);
-      -webkit-font-smoothing: antialiased;
-    }
+    body { font-family: var(--font-sans); background: var(--bg); color: var(--text); -webkit-font-smoothing: antialiased; }
     .mono { font-family: var(--font-mono); }
-    .sidebar-link {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 9px 14px;
-      border-radius: 8px;
-      font-size: 13.5px;
-      font-weight: 500;
-      color: var(--muted);
-      transition: all 0.15s ease;
-      text-decoration: none;
-      letter-spacing: 0.01em;
+
+    /* ── Sidebar links ── */
+    .nav-group-btn {
+      display: flex; align-items: center; gap: 10px;
+      width: 100%; padding: 9px 12px; border-radius: 8px;
+      font-size: 13px; font-weight: 600; color: var(--muted);
+      background: none; border: none; cursor: pointer;
+      transition: all 0.15s; text-align: left; letter-spacing: 0.01em;
     }
-    .sidebar-link:hover { color: var(--text); background: rgba(255,255,255,0.05); }
-    .sidebar-link.active { color: #fff; background: var(--accent-dim); border-left: 2px solid var(--accent); padding-left: 12px; }
-    .sidebar-link svg { flex-shrink: 0; }
-    .card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 24px;
+    .nav-group-btn:hover { color: var(--text); background: rgba(255,255,255,0.04); }
+    .nav-group-btn.open { color: var(--text); }
+    .nav-group-btn .chevron { margin-left: auto; transition: transform 0.2s; flex-shrink: 0; }
+    .nav-group-btn.open .chevron { transform: rotate(90deg); }
+
+    .nav-child {
+      display: flex; align-items: center; gap: 9px;
+      padding: 7px 12px 7px 36px;
+      border-radius: 7px; font-size: 13px; font-weight: 500;
+      color: var(--muted); text-decoration: none;
+      transition: all 0.12s; position: relative;
     }
-    .btn-primary {
+    .nav-child:hover { color: #cbd5e1; background: rgba(255,255,255,0.03); }
+    .nav-child.active { color: #fff; background: var(--accent-dim); }
+    .nav-child.active::before {
+      content: ''; position: absolute; left: 22px;
+      width: 4px; height: 4px; border-radius: 50%;
       background: var(--accent);
-      color: #fff;
-      border: none;
-      padding: 10px 20px;
-      border-radius: 8px;
-      font-family: var(--font-sans);
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: opacity 0.15s;
     }
+
+    .nav-solo {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 12px; border-radius: 8px;
+      font-size: 13px; font-weight: 600; color: var(--muted);
+      text-decoration: none; transition: all 0.15s; letter-spacing: 0.01em;
+    }
+    .nav-solo:hover { color: var(--text); background: rgba(255,255,255,0.04); }
+    .nav-solo.active { color: #fff; background: var(--accent-dim); border-left: 2px solid var(--accent); padding-left: 10px; }
+
+    .nav-section-label {
+      font-size: 10px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.12em; color: rgba(100,116,139,0.6);
+      padding: 14px 12px 5px; display: block;
+    }
+
+    /* ── Cards / Buttons ── */
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 24px; }
+    .btn-primary { background: var(--accent); color: #fff; border: none; padding: 10px 20px; border-radius: 8px; font-family: var(--font-sans); font-size: 14px; font-weight: 600; cursor: pointer; transition: opacity 0.15s; }
     .btn-primary:hover { opacity: 0.88; }
-    .btn-ghost {
-      background: rgba(255,255,255,0.05);
-      color: var(--text);
-      border: 1px solid var(--border);
-      padding: 9px 18px;
-      border-radius: 8px;
-      font-family: var(--font-sans);
-      font-size: 13.5px;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.15s;
-      text-decoration: none;
-      display: inline-block;
-    }
+    .btn-ghost { background: rgba(255,255,255,0.05); color: var(--text); border: 1px solid var(--border); padding: 9px 18px; border-radius: 8px; font-family: var(--font-sans); font-size: 13.5px; font-weight: 500; cursor: pointer; transition: all 0.15s; text-decoration: none; display: inline-block; }
     .btn-ghost:hover { background: rgba(255,255,255,0.1); }
-    .btn-danger {
-      background: rgba(239,68,68,0.12);
-      color: var(--red);
-      border: 1px solid rgba(239,68,68,0.2);
-      padding: 8px 16px;
-      border-radius: 7px;
-      font-family: var(--font-sans);
-      font-size: 13px;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.15s;
-    }
+    .btn-danger { background: rgba(239,68,68,0.12); color: var(--red); border: 1px solid rgba(239,68,68,0.2); padding: 8px 16px; border-radius: 7px; font-family: var(--font-sans); font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.15s; }
     .btn-danger:hover { background: rgba(239,68,68,0.22); }
-    .btn-success {
-      background: rgba(34,197,94,0.12);
-      color: var(--green);
-      border: 1px solid rgba(34,197,94,0.2);
-      padding: 8px 16px;
-      border-radius: 7px;
-      font-family: var(--font-sans);
-      font-size: 13px;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.15s;
-    }
+    .btn-success { background: rgba(34,197,94,0.12); color: var(--green); border: 1px solid rgba(34,197,94,0.2); padding: 8px 16px; border-radius: 7px; font-family: var(--font-sans); font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.15s; }
     .btn-success:hover { background: rgba(34,197,94,0.22); }
-    .input-field {
-      width: 100%;
-      background: rgba(255,255,255,0.04);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 10px 14px;
-      font-family: var(--font-sans);
-      font-size: 14px;
-      color: var(--text);
-      outline: none;
-      transition: border-color 0.15s;
-    }
+
+    /* ── Forms ── */
+    .input-field { width: 100%; background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; font-family: var(--font-sans); font-size: 14px; color: var(--text); outline: none; transition: border-color 0.15s; }
     .input-field:focus { border-color: var(--accent); }
     .input-field::placeholder { color: var(--muted); }
     textarea.input-field { resize: vertical; min-height: 120px; }
     select.input-field option { background: #1a2540; }
-    label.field-label {
-      display: block;
-      font-size: 12.5px;
-      font-weight: 600;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      margin-bottom: 7px;
-    }
+    label.field-label { display: block; font-size: 12.5px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 7px; }
+
+    /* ── Badges ── */
     .badge-green { background: rgba(34,197,94,0.12); color: #22c55e; border: 1px solid rgba(34,197,94,0.2); padding: 3px 10px; border-radius: 99px; font-size: 12px; font-weight: 600; }
     .badge-red { background: rgba(239,68,68,0.12); color: #ef4444; border: 1px solid rgba(239,68,68,0.2); padding: 3px 10px; border-radius: 99px; font-size: 12px; font-weight: 600; }
     .badge-yellow { background: rgba(234,179,8,0.12); color: #eab308; border: 1px solid rgba(234,179,8,0.2); padding: 3px 10px; border-radius: 99px; font-size: 12px; font-weight: 600; }
     .badge-blue { background: rgba(59,130,246,0.12); color: #3b82f6; border: 1px solid rgba(59,130,246,0.2); padding: 3px 10px; border-radius: 99px; font-size: 12px; font-weight: 600; }
     .badge-gray { background: rgba(100,116,139,0.15); color: #94a3b8; border: 1px solid rgba(100,116,139,0.2); padding: 3px 10px; border-radius: 99px; font-size: 12px; font-weight: 600; }
+
+    /* ── Table ── */
     .data-table { width: 100%; border-collapse: collapse; }
     .data-table th { font-size: 11.5px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border); }
     .data-table td { padding: 13px 14px; font-size: 14px; border-bottom: 1px solid rgba(255,255,255,0.04); vertical-align: middle; }
     .data-table tr:last-child td { border-bottom: none; }
     .data-table tbody tr:hover td { background: rgba(255,255,255,0.02); }
+
+    /* ── Page header ── */
     .page-header { margin-bottom: 28px; }
     .page-title { font-size: 22px; font-weight: 700; color: #f1f5f9; letter-spacing: -0.02em; }
     .page-subtitle { font-size: 13.5px; color: var(--muted); margin-top: 4px; }
-    /* Toggle switch */
+
+    /* ── Toggle ── */
     .toggle-wrap { display: flex; align-items: center; gap: 10px; }
     .toggle-input { display: none; }
-    .toggle-label {
-      position: relative; width: 44px; height: 24px; cursor: pointer;
-      background: rgba(255,255,255,0.1); border-radius: 99px; transition: background 0.2s;
-      flex-shrink: 0;
-    }
-    .toggle-label::after {
-      content: ''; position: absolute; top: 3px; left: 3px;
-      width: 18px; height: 18px; background: #fff; border-radius: 50%;
-      transition: transform 0.2s; box-shadow: 0 1px 4px rgba(0,0,0,0.3);
-    }
+    .toggle-label { position: relative; width: 44px; height: 24px; cursor: pointer; background: rgba(255,255,255,0.1); border-radius: 99px; transition: background 0.2s; flex-shrink: 0; }
+    .toggle-label::after { content: ''; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; background: #fff; border-radius: 50%; transition: transform 0.2s; box-shadow: 0 1px 4px rgba(0,0,0,0.3); }
     .toggle-input:checked + .toggle-label { background: var(--accent); }
     .toggle-input:checked + .toggle-label::after { transform: translateX(20px); }
-    /* Scrollbar */
-    ::-webkit-scrollbar { width: 6px; height: 6px; }
+
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
     ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
-    /* Toast */
-    .toast {
-      position: fixed; bottom: 24px; right: 24px; z-index: 9999;
-      padding: 14px 20px; border-radius: 10px; font-size: 14px; font-weight: 500;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
-      animation: slideUp 0.25s ease;
-    }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 3px; }
+
+    /* ── Toast ── */
+    .toast { position: fixed; bottom: 24px; right: 24px; z-index: 9999; padding: 14px 20px; border-radius: 10px; font-size: 14px; font-weight: 500; box-shadow: 0 8px 32px rgba(0,0,0,0.4); animation: slideUp 0.25s ease; }
     .toast-success { background: #166534; border: 1px solid #22c55e; color: #bbf7d0; }
     .toast-error { background: #7f1d1d; border: 1px solid #ef4444; color: #fecaca; }
     @keyframes slideUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+
+    [x-cloak] { display: none !important; }
   </style>
 </head>
+
+{% set p = request.url.path %}
+
 <body class="h-full flex" style="background: var(--bg);">
 
-  <!-- Sidebar -->
-  <aside style="width:220px; min-height:100vh; background:var(--surface); border-right:1px solid var(--border); display:flex; flex-direction:column; flex-shrink:0; position:fixed; top:0; left:0; height:100%;">
+  <!-- ══ Sidebar ══════════════════════════════════════════════════ -->
+  <aside style="width:240px; min-height:100vh; background:var(--surface); border-right:1px solid var(--border); display:flex; flex-direction:column; flex-shrink:0; position:fixed; top:0; left:0; height:100%; overflow:hidden;">
+
     <!-- Logo -->
-    <div style="padding:20px 18px 16px; border-bottom:1px solid var(--border);">
+    <div style="padding:18px 16px 15px; border-bottom:1px solid var(--border); flex-shrink:0;">
       <div style="display:flex; align-items:center; gap:10px;">
-        <div style="width:32px; height:32px; background:var(--accent); border-radius:8px; display:flex; align-items:center; justify-content:center;">
-          <svg width="17" height="17" fill="none" viewBox="0 0 24 24" stroke="white" stroke-width="2.5"><path d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-4 4v-4z"/></svg>
+        <div style="width:34px; height:34px; background:var(--accent); border-radius:9px; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+          <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="white" stroke-width="2.5"><path d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-4 4v-4z"/></svg>
         </div>
         <div>
-          <div style="font-size:14px; font-weight:700; color:#f1f5f9; letter-spacing:-0.01em;">Mike Agentes</div>
-          <div style="font-size:11px; color:var(--muted); font-family:var(--font-mono);">painel</div>
+          <div style="font-size:14px; font-weight:700; color:#f1f5f9; letter-spacing:-0.01em; line-height:1.2;">Mike Agentes</div>
+          <div style="font-size:10px; color:var(--muted); font-family:var(--font-mono); margin-top:1px;">painel de controle</div>
         </div>
       </div>
     </div>
 
     <!-- Nav -->
-    <nav style="padding:12px 10px; flex:1; overflow-y:auto;">
-      <div style="font-size:10.5px; font-weight:600; text-transform:uppercase; letter-spacing:0.1em; color:var(--muted); padding:6px 14px 8px;">Menu</div>
+    <nav style="padding:10px 10px; flex:1; overflow-y:auto;" x-data="{
+      empresa: {{ 'true' if p in ['/professionals', '/services', '/availability'] or '/professionals/' in p or '/services/' in p else 'false' }},
+      agenda:  {{ 'true' if '/appointments' in p else 'false' }},
+      agente:  {{ 'true' if '/agent' in p or '/schedules' in p else 'false' }},
+      conta:   {{ 'true' if '/profile' in p else 'false' }},
+      admin:   {{ 'true' if '/admin' in p else 'false' }}
+    }">
 
-      <a href="/dashboard" class="sidebar-link {% if request.url.path == '/dashboard' %}active{% endif %}">
-        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      <!-- Dashboard -->
+      <a href="/dashboard" class="nav-solo {{ 'active' if p == '/dashboard' else '' }}" style="margin-bottom:2px;">
+        <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/>
+          <rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>
+        </svg>
         Dashboard
       </a>
-      <a href="/agent/config" class="sidebar-link {% if '/agent' in request.url.path %}active{% endif %}">
-        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93A10 10 0 0 0 4.93 19.07M4.93 4.93a10 10 0 0 0 14.14 14.14"/></svg>
-        Configurar Agente
-      </a>
-      <a href="/professionals" class="sidebar-link {% if '/professionals' in request.url.path %}active{% endif %}">
-        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-        Profissionais
-      </a>
-      <a href="/services" class="sidebar-link {% if '/services' in request.url.path %}active{% endif %}">
-        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg>
-        Servicos
-      </a>
-      <a href="/availability" class="sidebar-link {% if '/availability' in request.url.path %}active{% endif %}">
-        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
-        Disponibilidade
-      </a>
-      <a href="/appointments" class="sidebar-link {% if '/appointments' in request.url.path %}active{% endif %}">
-        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
-        Agenda
-      </a>
 
+      <!-- Minha Empresa -->
+      <div style="margin-top:4px;">
+        <button class="nav-group-btn" :class="{ open: empresa }" @click="empresa = !empresa">
+          <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
+          </svg>
+          Minha Empresa
+          <svg class="chevron" width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
+        </button>
+        <div x-show="empresa" x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 -translate-y-1" x-transition:enter-end="opacity-100 translate-y-0" style="margin-top:2px; display:flex; flex-direction:column; gap:1px;">
+          <a href="/professionals" class="nav-child {{ 'active' if '/professionals' in p else '' }}">
+            <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            Profissionais
+          </a>
+          <a href="/services" class="nav-child {{ 'active' if '/services' in p else '' }}">
+            <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg>
+            Servicos
+          </a>
+          <a href="/availability" class="nav-child {{ 'active' if '/availability' in p else '' }}">
+            <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+            Disponibilidade
+          </a>
+        </div>
+      </div>
+
+      <!-- Agenda -->
+      <div style="margin-top:4px;">
+        <button class="nav-group-btn" :class="{ open: agenda }" @click="agenda = !agenda">
+          <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/>
+          </svg>
+          Agenda
+          <svg class="chevron" width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
+        </button>
+        <div x-show="agenda" x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 -translate-y-1" x-transition:enter-end="opacity-100 translate-y-0" style="margin-top:2px; display:flex; flex-direction:column; gap:1px;">
+          <a href="/appointments" class="nav-child {{ 'active' if p == '/appointments' else '' }}">
+            <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
+            Ver Agendamentos
+          </a>
+          <a href="/appointments/new" class="nav-child {{ 'active' if p == '/appointments/new' else '' }}">
+            <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+            Novo Agendamento
+          </a>
+        </div>
+      </div>
+
+      <!-- Meu Agente -->
+      <div style="margin-top:4px;">
+        <button class="nav-group-btn" :class="{ open: agente }" @click="agente = !agente">
+          <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path d="M12 2a10 10 0 0 1 10 10c0 5.52-4.48 10-10 10S2 17.52 2 12 6.48 2 12 2z"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/>
+          </svg>
+          Meu Agente
+          <svg class="chevron" width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
+        </button>
+        <div x-show="agente" x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 -translate-y-1" x-transition:enter-end="opacity-100 translate-y-0" style="margin-top:2px; display:flex; flex-direction:column; gap:1px;">
+          <a href="/agent/config" class="nav-child {{ 'active' if p == '/agent/config' else '' }}">
+            <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93A10 10 0 0 0 4.93 19.07M4.93 4.93a10 10 0 0 0 14.14 14.14"/></svg>
+            Personalizar
+          </a>
+          <a href="/schedules" class="nav-child {{ 'active' if '/schedules' in p else '' }}">
+            <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            Envios Programados
+          </a>
+        </div>
+      </div>
+
+      <!-- Minha Conta -->
+      <div style="margin-top:4px;">
+        <button class="nav-group-btn" :class="{ open: conta }" @click="conta = !conta">
+          <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+          </svg>
+          Minha Conta
+          <svg class="chevron" width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
+        </button>
+        <div x-show="conta" x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 -translate-y-1" x-transition:enter-end="opacity-100 translate-y-0" style="margin-top:2px; display:flex; flex-direction:column; gap:1px;">
+          <a href="/profile" class="nav-child {{ 'active' if p == '/profile' else '' }}">
+            <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            Meus Dados
+          </a>
+        </div>
+      </div>
+
+      <!-- Admin -->
       {% if user.is_admin %}
-      <div style="font-size:10.5px; font-weight:600; text-transform:uppercase; letter-spacing:0.1em; color:var(--muted); padding:14px 14px 8px;">Admin</div>
-      <a href="/admin/tenants" class="sidebar-link {% if '/admin' in request.url.path %}active{% endif %}">
-        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-        Tenants
-      </a>
-      {% if request.cookies.get('impersonate_tenant_id') %}
-      <a href="/admin/switch-exit" class="sidebar-link" style="color:#eab308;">
-        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-        Sair da simulacao
-      </a>
+      <div style="margin-top:16px; padding-top:12px; border-top:1px solid var(--border);">
+        <span class="nav-section-label">Administracao</span>
+        <button class="nav-group-btn" :class="{ open: admin }" @click="admin = !admin">
+          <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          </svg>
+          Administracao
+          <svg class="chevron" width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
+        </button>
+        <div x-show="admin" x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 -translate-y-1" x-transition:enter-end="opacity-100 translate-y-0" style="margin-top:2px; display:flex; flex-direction:column; gap:1px;">
+          <a href="/admin/tenants" class="nav-child {{ 'active' if p == '/admin/tenants' else '' }}">
+            <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+            Tenants
+          </a>
+          {% if request.cookies.get('impersonate_tenant_id') %}
+          <a href="/admin/switch-exit" class="nav-child" style="color:#eab308;">
+            <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="#eab308" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            Sair da simulacao
+          </a>
+          {% endif %}
+        </div>
+      </div>
       {% endif %}
-      {% endif %}
+
     </nav>
 
-    <!-- User / Logout -->
-    <div style="padding:12px 10px; border-top:1px solid var(--border);">
-      <div style="padding:8px 14px; margin-bottom:4px;">
-        <div style="font-size:12px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ user.email }}</div>
+    <!-- Footer: email + logout -->
+    <div style="padding:10px; border-top:1px solid var(--border); flex-shrink:0;">
+      <div style="padding:6px 12px 8px;">
+        <div style="font-size:11.5px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ user.email }}</div>
       </div>
       <form method="post" action="/logout">
-        <button type="submit" class="sidebar-link" style="width:100%; background:none; border:none; cursor:pointer; text-align:left;">
-          <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        <button type="submit" class="nav-group-btn" style="color:#ef4444; font-weight:500;">
+          <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
           Sair
         </button>
       </form>
     </div>
   </aside>
 
-  <!-- Main content -->
-  <div style="margin-left:220px; flex:1; display:flex; flex-direction:column; min-height:100vh;">
+  <!-- ══ Main content ═══════════════════════════════════════════════ -->
+  <div style="margin-left:240px; flex:1; display:flex; flex-direction:column; min-height:100vh;">
+
     <!-- Topbar -->
-    <header style="height:56px; border-bottom:1px solid var(--border); display:flex; align-items:center; padding:0 28px; gap:12px; background:var(--bg); position:sticky; top:0; z-index:10;">
+    <header style="height:52px; border-bottom:1px solid var(--border); display:flex; align-items:center; padding:0 28px; gap:12px; background:var(--bg); position:sticky; top:0; z-index:10; flex-shrink:0;">
       <div style="flex:1;">
-        <span style="font-size:13px; font-weight:600; color:var(--text);">{% block page_title %}Painel{% endblock %}</span>
+        <span style="font-size:13px; font-weight:600; color:var(--text);">{% block page_title %}{% endblock %}</span>
       </div>
+
       {% if user.is_admin and request.cookies.get('impersonate_tenant_id') %}
-      <div style="display:flex; align-items:center; gap:8px; background:rgba(234,179,8,0.1); border:1px solid rgba(234,179,8,0.3); padding:5px 12px; border-radius:99px;">
-        <div style="width:6px;height:6px;border-radius:50%;background:#eab308;"></div>
-        <span style="font-size:12px; font-weight:600; color:#eab308;">Simulando tenant</span>
-        <a href="/admin/switch-exit" style="font-size:12px; color:#eab308; text-decoration:underline;">Sair</a>
+      <div style="display:flex; align-items:center; gap:8px; background:rgba(234,179,8,0.08); border:1px solid rgba(234,179,8,0.25); padding:4px 12px; border-radius:99px;">
+        <div style="width:6px; height:6px; border-radius:50%; background:#eab308;"></div>
+        <span style="font-size:12px; font-weight:600; color:#eab308;">
+          Simulando: {{ request.cookies.get('impersonate_tenant_name') or 'tenant' }}
+        </span>
+        <a href="/admin/switch-exit" style="font-size:11.5px; color:#eab308; text-decoration:underline; margin-left:4px;">sair</a>
       </div>
       {% endif %}
+
       <div style="font-family:var(--font-mono); font-size:11px; color:var(--muted);" id="clock"></div>
     </header>
 
-    <!-- Page content -->
+    <!-- Page -->
     <main style="flex:1; padding:28px; overflow-y:auto;">
       {% block content %}{% endblock %}
     </main>
   </div>
 
-  <!-- Toast container -->
+  <!-- Toast -->
   <div x-show="toast.show" x-cloak :class="'toast toast-' + toast.type" x-text="toast.message" @click="toast.show = false" style="cursor:pointer;"></div>
 
   <script>
@@ -288,7 +337,6 @@
         }
       }
     }
-    // Relógio topbar
     function updateClock() {
       const el = document.getElementById('clock');
       if (el) el.textContent = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });

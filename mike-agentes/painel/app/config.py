@@ -8,7 +8,7 @@ class Settings(BaseSettings):
     SUPABASE_JWT_SECRET: str
 
     ADMIN_EMAIL: str = "rafaelmacario1991@gmail.com"
-    SECRET_KEY: str = "dev-secret-change-in-production"
+    SECRET_KEY: str = "dev-secret-change-in-production"  # sobrescrever em .env em produção
     ENVIRONMENT: str = "development"
 
     class Config:

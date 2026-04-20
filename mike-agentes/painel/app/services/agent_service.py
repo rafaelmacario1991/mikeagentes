@@ -3,8 +3,8 @@ from app.services.supabase_client import get_admin_client
 
 def get_agent_config(tenant_id: str) -> dict | None:
     client = get_admin_client()
-    result = client.table("agent_configs").select("*").eq("tenant_id", tenant_id).maybe_single().execute()
-    return result.data
+    result = client.table("agent_configs").select("*").eq("tenant_id", tenant_id).limit(1).execute()
+    return result.data[0] if result.data else None
 
 
 def upsert_agent_config(tenant_id: str, data: dict) -> dict:

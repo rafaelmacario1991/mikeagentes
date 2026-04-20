@@ -11,9 +11,11 @@
   <div class="page-title" style="margin:0;">{{ 'Editar servico' if service else 'Novo servico' }}</div>
 </div>
 
-<div style="max-width:560px;">
+<div style="max-width:600px;">
   <div class="card">
     <form method="post" action="{{ '/services/' + service.id + '/edit' if service else '/services/new' }}">
+
+      <div style="font-size:12px; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:18px;">Informacoes do servico</div>
 
       <div style="margin-bottom:18px;">
         <label class="field-label" for="name">Nome do servico</label>
@@ -22,6 +24,45 @@
       </div>
 
       <div style="margin-bottom:18px;">
+        <label class="field-label" for="description">Descricao (aparece no agente de IA)</label>
+        <textarea class="input-field" id="description" name="description" rows="3"
+          placeholder="Ex: Corte completo com tesoura e maquina, inclui acabamento na nuca e patillas. Atende todos os estilos."
+          style="resize:vertical; min-height:80px;">{{ service.description if service and service.description else '' }}</textarea>
+        <div style="font-size:11.5px; color:var(--muted); margin-top:4px;">O agente usa essa descricao para detalhar o servico ao cliente.</div>
+      </div>
+
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:18px;">
+        <div>
+          <label class="field-label" for="duration_minutes">Duracao (minutos)</label>
+          <input class="input-field" type="number" id="duration_minutes" name="duration_minutes"
+            min="5" max="480" step="5" placeholder="Ex: 30"
+            value="{{ service.duration_min if service else '' }}" required>
+        </div>
+        <div>
+          <label class="field-label" for="price">Preco (R$)</label>
+          <input class="input-field" type="number" id="price" name="price"
+            min="0" step="0.01" placeholder="Ex: 35.00"
+            value="{{ service.price if service else '' }}" required>
+        </div>
+      </div>
+
+      <div style="margin-bottom:24px;">
+        <label class="field-label">Formas de pagamento aceitas</label>
+        <div style="display:flex; flex-wrap:wrap; gap:10px; margin-top:8px;">
+          {% set current_payments = (service.payment_types if service and service.payment_types else '') %}
+          {% for metodo in ['PIX', 'Dinheiro', 'Cartao de Debito', 'Cartao de Credito', 'Transferencia'] %}
+          <label style="display:flex; align-items:center; gap:8px; cursor:pointer; padding:8px 14px; background:#0d1424; border:1px solid var(--border); border-radius:8px; transition:border-color .15s; white-space:nowrap;"
+                 onmouseover="this.style.borderColor='#3b82f6'" onmouseout="this.style.borderColor='var(--border)'">
+            <input type="checkbox" name="payment_types" value="{{ metodo }}"
+              {% if metodo in current_payments %}checked{% endif %}
+              style="width:15px; height:15px; accent-color:#3b82f6; cursor:pointer;">
+            <span style="font-size:13px; color:#e2e8f0;">{{ metodo }}</span>
+          </label>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div style="margin-bottom:24px;">
         <label class="field-label">Profissionais que realizam este servico</label>
         {% if professionals %}
           <div style="display:flex; flex-direction:column; gap:10px; margin-top:8px;">
@@ -46,21 +87,6 @@
             Nenhum profissional cadastrado. <a href="/professionals/new" style="color:#3b82f6;">Cadastre um profissional primeiro.</a>
           </div>
         {% endif %}
-      </div>
-
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:28px;">
-        <div>
-          <label class="field-label" for="duration_minutes">Duracao (minutos)</label>
-          <input class="input-field" type="number" id="duration_minutes" name="duration_minutes"
-            min="5" max="480" step="5" placeholder="Ex: 30"
-            value="{{ service.duration_min if service else '' }}" required>
-        </div>
-        <div>
-          <label class="field-label" for="price">Preco (R$)</label>
-          <input class="input-field" type="number" id="price" name="price"
-            min="0" step="0.01" placeholder="Ex: 35.00"
-            value="{{ service.price if service else '' }}" required>
-        </div>
       </div>
 
       <div style="display:flex; gap:10px;">

@@ -3,7 +3,7 @@ from fastapi import APIRouter, Request, Depends, Form, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from app.dependencies import require_admin, CurrentUser
-from app.services import admin_service
+from app.services import admin_service, agent_service
 
 logger = logging.getLogger("mike_agentes")
 
@@ -61,6 +61,42 @@ async def toggle_tenant(
 
 
 _IMPERSONATE_TTL = 3600  # 1 hora
+
+
+@router.get("/admin/tenants/{tenant_id}/agent", response_class=HTMLResponse)
+async def admin_agent_config_page(tenant_id: str, request: Request, user: CurrentUser = Depends(require_admin)):
+    tenant = admin_service.get_tenant(tenant_id)
+    if not tenant:
+        raise HTTPException(status_code=404, detail="Tenant não encontrado")
+    config = agent_service.get_agent_config(tenant_id) or {}
+    return templates.TemplateResponse("admin/agent_config.html", {
+        "request": request,
+        "user": user,
+        "tenant": tenant,
+        "config": config,
+        "success": request.query_params.get("saved"),
+    })
+
+
+@router.post("/admin/tenants/{tenant_id}/agent")
+async def admin_agent_config_save(
+    tenant_id: str,
+    request: Request,
+    user: CurrentUser = Depends(require_admin),
+    whatsapp_instance: str = Form(...),
+    mkpro_instance_id: str = Form(""),
+    mkpro_token: str = Form(""),
+    redis_prefix: str = Form(""),
+    ativo: str = Form("false"),
+):
+    agent_service.upsert_agent_config(tenant_id, {
+        "whatsapp_instance": whatsapp_instance,
+        "mkpro_instance_id": mkpro_instance_id or None,
+        "mkpro_token": mkpro_token or None,
+        "redis_prefix": redis_prefix or None,
+        "ativo": ativo == "true",
+    })
+    return RedirectResponse(url=f"/admin/tenants/{tenant_id}/agent?saved=1", status_code=302)
 
 
 @router.get("/admin/switch/{tenant_id}")

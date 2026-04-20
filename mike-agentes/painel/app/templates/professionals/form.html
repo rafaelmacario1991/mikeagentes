@@ -11,20 +11,41 @@
   <div class="page-title" style="margin:0;">{{ 'Editar profissional' if professional else 'Novo profissional' }}</div>
 </div>
 
-<div style="max-width:520px;">
+<div style="max-width:580px;">
   <div class="card">
     <form method="post" action="{{ '/professionals/' + professional.id + '/edit' if professional else '/professionals/new' }}">
+
+      <div style="font-size:12px; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:18px;">Identidade</div>
+
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:18px;">
+        <div>
+          <label class="field-label" for="name">Nome completo</label>
+          <input class="input-field" type="text" id="name" name="name"
+            placeholder="Ex: Carlos Silva" value="{{ professional.name if professional else '' }}" required autofocus>
+        </div>
+        <div>
+          <label class="field-label" for="specialty">Especialidade / Cargo</label>
+          <input class="input-field" type="text" id="specialty" name="specialty"
+            placeholder="Ex: Barbeiro, Cabeleireiro..."
+            value="{{ professional.role if professional else '' }}">
+        </div>
+      </div>
+
       <div style="margin-bottom:18px;">
-        <label class="field-label" for="name">Nome completo</label>
-        <input class="input-field" type="text" id="name" name="name"
-          placeholder="Ex: Carlos Silva" value="{{ professional.name if professional else '' }}" required autofocus>
+        <label class="field-label" for="bio">Apresentacao (aparece no agente de IA)</label>
+        <textarea class="input-field" id="bio" name="bio" rows="3"
+          placeholder="Ex: Carlos tem 8 anos de experiencia em cortes masculinos e especializacao em degradê. Atende de segunda a sabado."
+          style="resize:vertical; min-height:80px;">{{ professional.bio if professional and professional.bio else '' }}</textarea>
+        <div style="font-size:11.5px; color:var(--muted); margin-top:4px;">O agente usa essa descricao para apresentar o profissional ao cliente.</div>
       </div>
+
       <div style="margin-bottom:28px;">
-        <label class="field-label" for="specialty">Especialidade</label>
-        <input class="input-field" type="text" id="specialty" name="specialty"
-          placeholder="Ex: Barbeiro, Cabeleireiro, Esteticista..."
-          value="{{ professional.specialty if professional else '' }}">
+        <label class="field-label" for="photo_url">Foto (URL — opcional)</label>
+        <input class="input-field" type="url" id="photo_url" name="photo_url"
+          placeholder="https://..."
+          value="{{ professional.photo_url if professional and professional.photo_url else '' }}">
       </div>
+
       <div style="display:flex; gap:10px;">
         <button type="submit" class="btn-primary">{{ 'Salvar alteracoes' if professional else 'Criar profissional' }}</button>
         <a href="/professionals" class="btn-ghost">Cancelar</a>

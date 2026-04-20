@@ -2,7 +2,7 @@ import json
 from fastapi import APIRouter, Request, Depends, Query
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
-from app.dependencies import get_current_user, get_effective_tenant, CurrentUser
+from app.dependencies import get_current_user, get_effective_tenant, require_tenant, CurrentUser
 from app.services import availability_service, professionals_service
 
 router = APIRouter()
@@ -17,7 +17,7 @@ async def availability_page(
     user: CurrentUser = Depends(get_current_user),
     professional_id: str | None = Query(None),
 ):
-    tenant_id = get_effective_tenant(user, request)
+    tenant_id = require_tenant(user, request)
     professionals = professionals_service.list_professionals(tenant_id)
 
     slots = {}
@@ -34,6 +34,8 @@ async def availability_page(
             "active": row.get("ativo", False),
             "start": str(row.get("start_time", "08:00"))[:5],
             "end": str(row.get("end_time", "18:00"))[:5],
+            "break_start": str(row["break_start"])[:5] if row.get("break_start") else "",
+            "break_end":   str(row["break_end"])[:5]   if row.get("break_end")   else "",
         })
 
     return templates.TemplateResponse("availability/week_grid.html", {
@@ -47,7 +49,7 @@ async def availability_page(
 
 @router.post("/availability")
 async def save_availability(request: Request, user: CurrentUser = Depends(get_current_user)):
-    tenant_id = get_effective_tenant(user, request)
+    tenant_id = require_tenant(user, request)
     body = await request.json()
     professional_id = body.get("professional_id")
     days = body.get("days", [])

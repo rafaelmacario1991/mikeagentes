@@ -28,12 +28,19 @@ def save_week_availability(tenant_id: str, professional_id: str, days: list[dict
     rows = []
     for day in days:
         if day.get("active"):
+            break_start = day.get("break_start") or None
+            break_end   = day.get("break_end")   or None
+            # Ignora intervalo se só um dos campos foi preenchido
+            if not break_start or not break_end:
+                break_start = break_end = None
             rows.append({
                 "tenant_id": tenant_id,
                 "professional_id": professional_id,
                 "weekday": day["index"],
                 "start_time": day["start"],
                 "end_time": day["end"],
+                "break_start": break_start,
+                "break_end": break_end,
                 "ativo": True,
             })
     if rows:

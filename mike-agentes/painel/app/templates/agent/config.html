@@ -1,10 +1,10 @@
 {% extends "base.html" %}
-{% block title %}Configurar Agente{% endblock %}
+{% block title %}Meu Agente{% endblock %}
 
 {% block content %}
 <div class="page-header">
-  <div class="page-title">Configurar Agente</div>
-  <div class="page-subtitle">Personalize o comportamento e identidade do agente de IA.</div>
+  <div class="page-title">Meu Agente</div>
+  <div class="page-subtitle">Personalize o nome, tom de voz e comportamento do seu assistente.</div>
 </div>
 
 {% if success %}
@@ -13,187 +13,98 @@
 </div>
 {% endif %}
 
-<div style="display:grid; grid-template-columns:1fr 340px; gap:20px; align-items:start;">
+<div style="display:grid; grid-template-columns:1fr 300px; gap:20px; align-items:start;">
 
-  <!-- Formulario principal -->
   <div style="display:flex; flex-direction:column; gap:16px;">
-
     <div class="card">
-      <div style="font-size:12px; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:16px;">Identidade</div>
-      <form method="post" action="/agent/config" id="config-form">
+      <div style="font-size:12px; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:18px;">Identidade</div>
+      <form method="post" action="/agent/config">
 
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;">
-          <div>
-            <label class="field-label" for="agent_name">Nome do Agente</label>
-            <input class="input-field" type="text" id="agent_name" name="agent_name"
-              placeholder="Ex: Lucas" value="{{ config.agent_name or '' }}" required>
-          </div>
-          <div>
-            <label class="field-label" for="whatsapp_instance">Instancia WhatsApp (nome no n8n)</label>
-            <input class="input-field" type="text" id="whatsapp_instance" name="whatsapp_instance"
-              placeholder="Ex: Barbearia Silva - WABA" value="{{ config.whatsapp_instance or '' }}" required>
-            <div style="font-size:11.5px; color:var(--muted); margin-top:4px;">Deve ser igual ao nome da instancia configurada no n8n.</div>
-          </div>
-        </div>
-
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;">
-          <div>
-            <label class="field-label" for="mkpro_instance_id">ID da Instancia MK PRO</label>
-            <input class="input-field" type="text" id="mkpro_instance_id" name="mkpro_instance_id"
-              placeholder="Ex: def17a4b-1470-4362-ba38-f63f0637c174" value="{{ config.mkpro_instance_id or '' }}"
-              style="font-family:var(--font-mono); font-size:12.5px;">
-            <div style="font-size:11.5px; color:var(--muted); margin-top:4px;">UUID da instancia no painel MK PRO.</div>
-          </div>
-          <div>
-            <label class="field-label" for="mkpro_token">Token Bearer MK PRO</label>
-            <input class="input-field" type="password" id="mkpro_token" name="mkpro_token"
-              placeholder="Bearer eyJ..." value="{{ config.mkpro_token or '' }}"
-              style="font-family:var(--font-mono); font-size:12.5px;"
-              autocomplete="off">
-            <div style="font-size:11.5px; color:var(--muted); margin-top:4px;">Token de autorizacao para envio via MK PRO.</div>
-          </div>
-        </div>
-
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;">
-          <div>
-            <label class="field-label" for="redis_prefix">Prefixo Redis</label>
-            <input class="input-field" type="text" id="redis_prefix" name="redis_prefix"
-              placeholder="Ex: mk-agent-1" value="{{ config.redis_prefix or '' }}"
-              style="font-family:var(--font-mono); font-size:13px;">
-            <div style="font-size:11.5px; color:var(--muted); margin-top:4px;">
-              Unico por tenant. Isola a memoria Redis entre clientes. Ex: <span style="font-family:var(--font-mono); color:#3b82f6;">mk-bsilva</span>, <span style="font-family:var(--font-mono); color:#3b82f6;">mk-clinica1</span>
-            </div>
-          </div>
-          <div style="display:flex; flex-direction:column; justify-content:flex-start; padding-top:2px;">
-            <label class="field-label" style="visibility:hidden;">_</label>
-            <div style="background:rgba(234,179,8,0.08); border:1px solid rgba(234,179,8,0.2); border-radius:8px; padding:10px 13px;">
-              <div style="font-size:11.5px; color:#eab308; font-weight:600; margin-bottom:4px;">Chave gerada no Redis:</div>
-              <div style="font-family:var(--font-mono); font-size:11px; color:#fde68a;">
-                {{ config.redis_prefix or '[prefixo]' }}:{idChat}_history
-              </div>
-            </div>
-          </div>
+        <div style="margin-bottom:16px;">
+          <label class="field-label" for="agent_name">Nome do Agente</label>
+          <input class="input-field" type="text" id="agent_name" name="agent_name"
+            placeholder="Ex: Lucas, Sofia, Mike..." value="{{ config.agent_name or '' }}" required>
+          <div style="font-size:11.5px; color:var(--muted); margin-top:4px;">Como o agente se apresentara ao cliente no WhatsApp.</div>
         </div>
 
         <div style="margin-bottom:16px;">
           <label class="field-label" for="welcome_message">Mensagem de Boas-vindas</label>
           <input class="input-field" type="text" id="welcome_message" name="welcome_message"
-            placeholder="Ex: Ola! Sou o Lucas da Barbearia Silva. Como posso te ajudar?"
+            placeholder="Ex: Ola! Sou o Lucas. Como posso te ajudar hoje?"
             value="{{ config.welcome_message or '' }}">
         </div>
 
-        <div style="margin-bottom:24px;">
-          <label class="field-label" for="agent_persona">Persona do Agente (instrucao adicional ao LLM)</label>
-          <textarea class="input-field" id="agent_persona" name="agent_persona"
-            placeholder="Descreva o tom de voz, restricoes, estilo de atendimento..."
-            style="min-height:160px;">{{ config.agent_persona or '' }}</textarea>
-          <div style="font-size:12px; color:var(--muted); margin-top:6px;">
-            Complementa o system prompt base. Descreva o negocio, restricoes e diferenciais.
+        <div style="margin-bottom:16px;">
+          <label class="field-label" for="agent_persona">Personalidade e instrucoes de atendimento</label>
+          <textarea class="input-field" id="agent_persona" name="agent_persona" rows="6"
+            placeholder="Descreva o tom de voz, restricoes, diferenciais do negocio, regras de atendimento...&#10;&#10;Ex: Voce atende com simpatia e agilidade. O negocio tem foco em atendimento premium masculino. Nao agende para menores de 16 anos sem acompanhamento."
+            style="resize:vertical; min-height:140px;">{{ config.agent_persona or '' }}</textarea>
+          <div style="font-size:11.5px; color:var(--muted); margin-top:4px;">Essas instrucoes sao enviadas ao agente de IA em cada conversa.</div>
+        </div>
+
+        <div style="border-top:1px solid var(--border); padding-top:18px; margin-bottom:18px;">
+          <div style="font-size:12px; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:16px;">Agendamento</div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+            <div>
+              <label class="field-label" for="slot_duration_min">Duracao do slot (min)</label>
+              <input class="input-field" type="number" id="slot_duration_min" name="slot_duration_min"
+                min="15" max="240" step="15" value="{{ config.slot_duration_min or 30 }}">
+              <div style="font-size:11.5px; color:var(--muted); margin-top:4px;">Intervalo entre horarios disponiveis.</div>
+            </div>
+            <div>
+              <label class="field-label" for="max_advance_days">Antecedencia maxima (dias)</label>
+              <input class="input-field" type="number" id="max_advance_days" name="max_advance_days"
+                min="1" max="90" value="{{ config.max_advance_days or 14 }}">
+              <div style="font-size:11.5px; color:var(--muted); margin-top:4px;">Ate quantos dias a frente o cliente pode agendar.</div>
+            </div>
           </div>
         </div>
 
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:24px;">
-          <div>
-            <label class="field-label" for="slot_duration_min">Duracao do slot (minutos)</label>
-            <input class="input-field" type="number" id="slot_duration_min" name="slot_duration_min"
-              min="15" max="240" step="15" value="{{ config.slot_duration_min or 30 }}">
-            <div style="font-size:11.5px; color:var(--muted); margin-top:4px;">Cada horario disponivel tera esta duracao.</div>
-          </div>
-          <div>
-            <label class="field-label" for="max_advance_days">Agendamento antecipado (dias)</label>
-            <input class="input-field" type="number" id="max_advance_days" name="max_advance_days"
-              min="1" max="90" value="{{ config.max_advance_days or 14 }}">
-            <div style="font-size:11.5px; color:var(--muted); margin-top:4px;">Maximo de dias a frente que o cliente pode agendar.</div>
-          </div>
-        </div>
-
-        <div style="display:flex; gap:10px;">
-          <button type="submit" class="btn-primary">Salvar configuracoes</button>
-        </div>
+        <button type="submit" class="btn-primary">Salvar</button>
       </form>
-    </div>
-
-    <!-- Preview do system message -->
-    <div class="card">
-      <div style="font-size:12px; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:12px;">Preview — System Message enviado ao agente</div>
-      <div style="background:#080d16; border-radius:8px; padding:14px 16px; font-family:var(--font-mono); font-size:12px; color:#94a3b8; line-height:1.7; white-space:pre-wrap; border:1px solid var(--border);">Voce e <strong style="color:#e2e8f0;">{{ config.agent_name or '[nome]' }}</strong>, assistente de agendamentos.
-
-{{ config.agent_persona or '[persona nao configurada]' }}
-
-TENANT_ID: {{ config.tenant_id or '[tenant_id]' }}
-Instancia: {{ config.whatsapp_instance or '[instancia]' }}
-Slot: {{ config.slot_duration_min or 30 }}min | Antecedencia: {{ config.max_advance_days or 14 }} dias</div>
     </div>
   </div>
 
-  <!-- Painel lateral: status do agente -->
+  <!-- Painel lateral -->
   <div style="display:flex; flex-direction:column; gap:16px;">
     <div class="card">
-      <div style="font-size:13px; font-weight:600; color:#94a3b8; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:16px;">Status do Agente</div>
-
-      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:20px;">
-        <div style="display:flex; align-items:center; gap:10px;">
-          <div style="width:10px;height:10px;border-radius:50%;
-            background:{% if config.ativo %}var(--green){% else %}#475569{% endif %};
-            {% if config.ativo %}box-shadow:0 0 0 3px rgba(34,197,94,0.2);animation:pulse 2s infinite;{% endif %}">
-          </div>
-          <span style="font-size:15px; font-weight:600; color:{% if config.ativo %}var(--green){% else %}var(--muted){% endif %};">
-            {% if config.ativo %}Ativo{% else %}Inativo{% endif %}
-          </span>
+      <div style="font-size:12px; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:16px;">Status</div>
+      <div style="display:flex; align-items:center; gap:10px; margin-bottom:20px;">
+        <div style="width:10px;height:10px;border-radius:50%;
+          background:{% if config.ativo %}var(--green){% else %}#475569{% endif %};
+          {% if config.ativo %}box-shadow:0 0 0 3px rgba(34,197,94,0.2);animation:pulse 2s infinite;{% endif %}">
         </div>
+        <span style="font-size:15px; font-weight:600; color:{% if config.ativo %}var(--green){% else %}var(--muted){% endif %};">
+          {% if config.ativo %}Ativo{% else %}Inativo{% endif %}
+        </span>
       </div>
-
       <form method="post" action="/agent/toggle">
         {% if config.ativo %}
           <input type="hidden" name="is_active" value="false">
           <button type="submit" class="btn-danger" style="width:100%;"
-            onclick="return confirm('Desativar o agente? O WhatsApp deixará de responder.')">Desativar agente</button>
+            onclick="return confirm('Desativar o agente?')">Desativar agente</button>
         {% else %}
           <input type="hidden" name="is_active" value="true">
           <button type="submit" class="btn-success" style="width:100%;">Ativar agente</button>
         {% endif %}
       </form>
-
-      <div style="margin-top:16px; padding-top:16px; border-top:1px solid var(--border);">
-        <div style="font-size:12px; color:var(--muted); line-height:1.6;">
-          Quando <strong style="color:var(--text);">ativo</strong>, o agente responde automaticamente as mensagens recebidas no WhatsApp.
-        </div>
-      </div>
     </div>
 
     <div class="card">
-      <div style="font-size:13px; font-weight:600; color:#94a3b8; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:12px;">Conexao n8n</div>
-      <div style="font-size:12.5px; color:var(--muted); line-height:1.9;">
-        <div style="margin-bottom:4px;"><strong style="color:#e2e8f0;">Busca config por:</strong></div>
-        <div style="font-family:var(--font-mono); font-size:11px; color:#3b82f6; background:#080d16; padding:8px 10px; border-radius:6px; margin-bottom:12px; word-break:break-all;">whatsapp_instance = "{{ config.whatsapp_instance or '—' }}"</div>
-        <div style="margin-bottom:4px;"><strong style="color:#e2e8f0;">MK PRO instance:</strong></div>
-        <div style="font-family:var(--font-mono); font-size:11px; color:{% if config.mkpro_instance_id %}#22c55e{% else %}#ef4444{% endif %}; background:#080d16; padding:8px 10px; border-radius:6px; word-break:break-all; margin-bottom:12px;">
-          {% if config.mkpro_instance_id %}{{ config.mkpro_instance_id }}{% else %}NAO CONFIGURADO{% endif %}
-        </div>
-        <div style="margin-bottom:4px;"><strong style="color:#e2e8f0;">Token Bearer:</strong></div>
-        <div style="font-family:var(--font-mono); font-size:11px; background:#080d16; padding:8px 10px; border-radius:6px; word-break:break-all;
-          color:{% if config.mkpro_token %}#22c55e{% else %}#ef4444{% endif %};">
-          {% if config.mkpro_token %}
-            ••••••••••••{{ config.mkpro_token[-4:] }}
-          {% else %}
-            NAO CONFIGURADO
-          {% endif %}
-        </div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div style="font-size:13px; font-weight:600; color:#94a3b8; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:12px;">Parametros</div>
-      <div style="font-size:12.5px; color:var(--muted); line-height:1.9;">
+      <div style="font-size:12px; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:12px;">Resumo</div>
+      <div style="font-size:13px; color:var(--muted); line-height:2;">
+        <div><strong style="color:#e2e8f0;">Nome:</strong> {{ config.agent_name or '—' }}</div>
         <div><strong style="color:#e2e8f0;">Slot:</strong> {{ config.slot_duration_min or 30 }} min</div>
         <div><strong style="color:#e2e8f0;">Antecedencia:</strong> {{ config.max_advance_days or 14 }} dias</div>
-        <div><strong style="color:#e2e8f0;">Boas-vindas:</strong> {{ (config.welcome_message or '—')[:50] }}{% if config.welcome_message and config.welcome_message|length > 50 %}...{% endif %}</div>
+        {% if config.whatsapp_instance %}
+        <div style="margin-top:12px; padding-top:12px; border-top:1px solid var(--border); font-size:11.5px; color:#475569;">
+          Instancia: <span style="font-family:var(--font-mono); color:#3b82f6;">{{ config.whatsapp_instance }}</span>
+        </div>
+        {% endif %}
       </div>
     </div>
   </div>
 </div>
 
-<style>
-@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
-</style>
+<style>@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }</style>
 {% endblock %}

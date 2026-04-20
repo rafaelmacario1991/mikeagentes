@@ -1,13 +1,14 @@
 {% extends "base.html" %}
 {% block title %}Disponibilidade{% endblock %}
+{% block page_title %}Disponibilidade{% endblock %}
 
 {% block content %}
 <div class="page-header">
   <div class="page-title">Disponibilidade</div>
-  <div class="page-subtitle">Configure os horarios de atendimento por profissional.</div>
+  <div class="page-subtitle">Configure os horários de atendimento e intervalos por profissional.</div>
 </div>
 
-<!-- Selecao de profissional -->
+<!-- Seleção de profissional -->
 <div class="card" style="margin-bottom:20px; padding:16px 20px;">
   <form method="get" action="/availability" style="display:flex; align-items:center; gap:12px;">
     <label class="field-label" style="margin:0; white-space:nowrap;">Profissional:</label>
@@ -23,9 +24,12 @@
 {% if selected_professional %}
 <div class="card" x-data="availabilityGrid({{ week_json }}, '{{ selected_professional }}')">
   <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:24px;">
-    <div style="font-size:15px; font-weight:700; color:#f1f5f9;">Grade semanal</div>
+    <div>
+      <div style="font-size:15px; font-weight:700; color:#f1f5f9;">Grade semanal</div>
+      <div style="font-size:12px; color:var(--muted); margin-top:3px;">Intervalo: período bloqueado no meio do expediente (ex: almoço)</div>
+    </div>
     <div style="display:flex; gap:10px; align-items:center;">
-      <span x-show="saved" x-cloak style="font-size:13px; color:var(--green);">Salvo!</span>
+      <span x-show="saved" x-cloak style="font-size:13px; color:var(--green);">✓ Salvo!</span>
       <button @click="save()" :disabled="saving" class="btn-primary">
         <span x-show="!saving">Salvar grade</span>
         <span x-show="saving" x-cloak>Salvando...</span>
@@ -33,22 +37,28 @@
     </div>
   </div>
 
-  <!-- Cabecalho -->
-  <div style="display:grid; grid-template-columns:140px 48px 1fr 1fr; gap:12px; margin-bottom:8px; padding:0 4px;">
+  <!-- Cabeçalho -->
+  <div style="display:grid; grid-template-columns:130px 44px 1fr 1fr 16px 1fr 1fr; gap:8px; margin-bottom:8px; padding:0 4px;">
     <div style="font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.08em; color:var(--muted);">Dia</div>
     <div style="font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.08em; color:var(--muted);">Ativo</div>
     <div style="font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.08em; color:var(--muted);">Entrada</div>
-    <div style="font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.08em; color:var(--muted);">Saida</div>
+    <div style="font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.08em; color:var(--muted);">Saída</div>
+    <div></div>
+    <div style="font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.08em; color:#eab308;">Intervalo De</div>
+    <div style="font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.08em; color:#eab308;">Intervalo Até</div>
   </div>
 
   <!-- Linhas -->
   <template x-for="day in days" :key="day.index">
-    <div style="display:grid; grid-template-columns:140px 48px 1fr 1fr; gap:12px; align-items:center; padding:10px 4px; border-top:1px solid var(--border);">
+    <div style="display:grid; grid-template-columns:130px 44px 1fr 1fr 16px 1fr 1fr; gap:8px; align-items:center; padding:10px 4px; border-top:1px solid var(--border);">
+
       <!-- Nome do dia -->
       <div style="display:flex; align-items:center; gap:8px;">
         <div style="width:6px; height:6px; border-radius:50%; transition:background 0.2s;"
           :style="day.active ? 'background:var(--green);' : 'background:#334155;'"></div>
-        <span style="font-size:14px; font-weight:500;" :style="day.active ? 'color:#f1f5f9;' : 'color:var(--muted);'" x-text="day.name"></span>
+        <span style="font-size:14px; font-weight:500;"
+          :style="day.active ? 'color:#f1f5f9;' : 'color:var(--muted);'"
+          x-text="day.name"></span>
       </div>
 
       <!-- Toggle -->
@@ -57,18 +67,44 @@
         <label :for="'day-'+day.index" class="toggle-label"></label>
       </div>
 
-      <!-- Hora inicio -->
+      <!-- Entrada -->
       <input type="time" x-model="day.start" :disabled="!day.active" class="input-field mono"
         style="font-size:14px;" :style="!day.active && 'opacity:0.35;'">
 
-      <!-- Hora fim -->
+      <!-- Saída -->
       <input type="time" x-model="day.end" :disabled="!day.active" class="input-field mono"
         style="font-size:14px;" :style="!day.active && 'opacity:0.35;'">
+
+      <!-- Separador visual -->
+      <div style="width:1px; height:28px; background:rgba(234,179,8,0.25); justify-self:center;"></div>
+
+      <!-- Intervalo De -->
+      <div style="position:relative;">
+        <input type="time" x-model="day.break_start" :disabled="!day.active" class="input-field mono"
+          style="font-size:14px; border-color:rgba(234,179,8,0.25);"
+          :style="!day.active ? 'opacity:0.35;' : (day.break_start ? 'border-color:rgba(234,179,8,0.6);' : '')"
+          placeholder="--:--">
+        <template x-if="day.active && day.break_start">
+          <button @click="day.break_start=''; day.break_end='';"
+            style="position:absolute; right:8px; top:50%; transform:translateY(-50%); background:none; border:none; color:var(--muted); cursor:pointer; font-size:14px; padding:0; line-height:1;"
+            title="Remover intervalo">×</button>
+        </template>
+      </div>
+
+      <!-- Intervalo Até -->
+      <input type="time" x-model="day.break_end" :disabled="!day.active || !day.break_start" class="input-field mono"
+        style="font-size:14px; border-color:rgba(234,179,8,0.25);"
+        :style="(!day.active || !day.break_start) ? 'opacity:0.35;' : (day.break_end ? 'border-color:rgba(234,179,8,0.6);' : '')">
     </div>
   </template>
 
-  <div style="margin-top:16px; padding-top:16px; border-top:1px solid var(--border); font-size:12.5px; color:var(--muted);">
-    Apenas os dias marcados como <strong style="color:var(--text);">Ativo</strong> serao considerados pelo agente ao consultar disponibilidade.
+  <div style="margin-top:16px; padding-top:16px; border-top:1px solid var(--border); display:flex; gap:24px; flex-wrap:wrap;">
+    <div style="font-size:12.5px; color:var(--muted);">
+      Dias <strong style="color:var(--text);">ativos</strong> são considerados pelo agente ao consultar disponibilidade.
+    </div>
+    <div style="font-size:12.5px; color:#eab308;">
+      <strong>Intervalo</strong> bloqueia agendamentos naquele período (ex: 12:00–13:00 para almoço).
+    </div>
   </div>
 </div>
 
@@ -78,7 +114,7 @@
     <rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>
   </svg>
   <div style="font-size:15px; font-weight:600; color:#475569; margin-bottom:6px;">Selecione um profissional</div>
-  <div style="font-size:13.5px;">Escolha um profissional acima para configurar seus horarios.</div>
+  <div style="font-size:13.5px;">Escolha um profissional acima para configurar seus horários.</div>
 </div>
 {% endif %}
 

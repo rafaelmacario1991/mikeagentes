@@ -14,28 +14,32 @@ def get_professional(professional_id: str, tenant_id: str) -> dict | None:
         .select("*")
         .eq("id", professional_id)
         .eq("tenant_id", tenant_id)
-        .maybe_single()
+        .limit(1)
         .execute()
     )
-    return result.data
+    return result.data[0] if result.data else None
 
 
-def create_professional(tenant_id: str, name: str, specialty: str) -> dict:
+def create_professional(tenant_id: str, name: str, specialty: str, bio: str = "", photo_url: str = "") -> dict:
     client = get_admin_client()
     result = client.table("professionals").insert({
         "tenant_id": tenant_id,
         "name": name,
         "role": specialty,
+        "bio": bio or None,
+        "photo_url": photo_url or None,
         "ativo": True,
     }).execute()
     return result.data[0]
 
 
-def update_professional(professional_id: str, tenant_id: str, name: str, specialty: str) -> None:
+def update_professional(professional_id: str, tenant_id: str, name: str, specialty: str, bio: str = "", photo_url: str = "") -> None:
     client = get_admin_client()
     client.table("professionals").update({
         "name": name,
         "role": specialty,
+        "bio": bio or None,
+        "photo_url": photo_url or None,
     }).eq("id", professional_id).eq("tenant_id", tenant_id).execute()
 
 

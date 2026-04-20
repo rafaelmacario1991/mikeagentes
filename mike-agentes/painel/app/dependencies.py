@@ -20,7 +20,9 @@ async def get_current_user(request: Request) -> CurrentUser:
 
     try:
         payload = get_user_from_token(token)
-    except Exception:
+    except Exception as e:
+        import logging
+        logging.getLogger("mike_agentes").error("get_user_from_token falhou: %s", e)
         raise HTTPException(status_code=401, detail="Token inválido")
 
     email = payload.get("email", "")
@@ -30,10 +32,10 @@ async def get_current_user(request: Request) -> CurrentUser:
     tenant_id = None
     if not is_admin:
         client = get_admin_client()
-        result = client.table("tenants").select("id").eq("email", email).maybe_single().execute()
+        result = client.table("tenants").select("id").eq("email", email).eq("ativo", True).limit(1).execute()
         if not result.data:
-            raise HTTPException(status_code=403, detail="Tenant não encontrado para este email")
-        tenant_id = result.data["id"]
+            raise HTTPException(status_code=403, detail="Acesso não autorizado para este email")
+        tenant_id = result.data[0]["id"]
 
     return CurrentUser(user_id=user_id, email=email, tenant_id=tenant_id, is_admin=is_admin)
 
@@ -44,13 +46,27 @@ async def require_admin(user: CurrentUser = Depends(get_current_user)) -> Curren
     return user
 
 
-def get_effective_tenant(user: CurrentUser, request: Request) -> str:
+def get_effective_tenant(user: CurrentUser, request: Request) -> str | None:
     """
     Admin pode impersonar qualquer tenant via cookie 'impersonate_tenant_id'.
     Tenant comum sempre usa o próprio tenant_id.
+    Retorna None se admin não tiver impersonado nenhum tenant.
     """
     if user.is_admin:
         impersonate = request.cookies.get("impersonate_tenant_id")
         if impersonate:
             return impersonate
+        return None
     return user.tenant_id
+
+
+def require_tenant(user: CurrentUser, request: Request) -> str:
+    """
+    Igual a get_effective_tenant mas lança exceção 302 para /admin/tenants
+    quando o admin não tiver impersonado nenhum tenant.
+    """
+    from fastapi.responses import RedirectResponse
+    tenant_id = get_effective_tenant(user, request)
+    if not tenant_id:
+        raise HTTPException(status_code=307, detail="Selecione um tenant", headers={"Location": "/admin/tenants"})
+    return tenant_id

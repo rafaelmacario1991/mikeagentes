@@ -1,102 +1,261 @@
 {% extends "base.html" %}
 {% block title %}Dashboard{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
 
 {% block content %}
-<div class="page-header" style="display:flex; align-items:flex-start; justify-content:space-between;">
-  <div>
-    <div class="page-title">Dashboard</div>
-    <div class="page-subtitle mono" style="font-size:12px;">{{ today }}</div>
-  </div>
-  <!-- Status do agente -->
-  <div style="display:flex; align-items:center; gap:10px; background:var(--surface); border:1px solid var(--border); padding:10px 16px; border-radius:10px;">
-    <div style="width:8px;height:8px;border-radius:50%;background:{% if agent_active %}var(--green){% else %}var(--muted){% endif %};
-      {% if agent_active %}box-shadow:0 0 0 3px rgba(34,197,94,0.2);animation:pulse 2s infinite;{% endif %}"></div>
-    <span style="font-size:13px; font-weight:600; color:{% if agent_active %}var(--green){% else %}var(--muted){% endif %};">
-      {{ agent_name }} — {% if agent_active %}Ativo{% else %}Inativo{% endif %}
-    </span>
-    <a href="/agent/config" style="font-size:12px; color:var(--accent); text-decoration:none; margin-left:4px;">Config</a>
-  </div>
-</div>
-
 <style>
 @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+.period-btn {
+  padding: 7px 14px;
+  border-radius: 7px;
+  font-size: 12.5px;
+  font-weight: 600;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: var(--font-sans);
+  white-space: nowrap;
+}
+.period-btn:hover { background: rgba(255,255,255,0.06); color: var(--text); }
+.period-btn.active { background: var(--accent-dim); border-color: var(--accent); color: #93c5fd; }
+.date-input {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 7px 12px;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.15s;
+  width: 135px;
+}
+.date-input:focus { border-color: var(--accent); }
+.date-input::-webkit-calendar-picker-indicator { filter: invert(0.6); cursor: pointer; }
+.day-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 0 8px;
+}
+.day-divider span {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+  white-space: nowrap;
+}
+.day-divider::before, .day-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+.day-divider::before { display: none; }
 </style>
 
-<!-- Metric cards -->
-<div style="display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:28px;">
-  <div class="card" style="border-top:2px solid var(--accent);">
-    <div style="font-size:11.5px; font-weight:600; text-transform:uppercase; letter-spacing:0.08em; color:var(--muted); margin-bottom:10px;">Total Hoje</div>
-    <div style="font-size:36px; font-weight:700; color:#f1f5f9; font-family:var(--font-mono); line-height:1;">{{ total_today }}</div>
-    <div style="font-size:12.5px; color:var(--muted); margin-top:6px;">agendamentos</div>
-  </div>
-  <div class="card" style="border-top:2px solid var(--green);">
-    <div style="font-size:11.5px; font-weight:600; text-transform:uppercase; letter-spacing:0.08em; color:var(--muted); margin-bottom:10px;">Confirmados</div>
-    <div style="font-size:36px; font-weight:700; color:var(--green); font-family:var(--font-mono); line-height:1;">{{ confirmed }}</div>
-    <div style="font-size:12.5px; color:var(--muted); margin-top:6px;">confirmados</div>
-  </div>
-  <div class="card" style="border-top:2px solid #eab308;">
-    <div style="font-size:11.5px; font-weight:600; text-transform:uppercase; letter-spacing:0.08em; color:var(--muted); margin-bottom:10px;">Pendentes</div>
-    <div style="font-size:36px; font-weight:700; color:#eab308; font-family:var(--font-mono); line-height:1;">{{ pending }}</div>
-    <div style="font-size:12.5px; color:var(--muted); margin-top:6px;">aguardando</div>
-  </div>
-  <div class="card" style="border-top:2px solid var(--red);">
-    <div style="font-size:11.5px; font-weight:600; text-transform:uppercase; letter-spacing:0.08em; color:var(--muted); margin-bottom:10px;">Cancelados</div>
-    <div style="font-size:36px; font-weight:700; color:var(--red); font-family:var(--font-mono); line-height:1;">{{ cancelled }}</div>
-    <div style="font-size:12.5px; color:var(--muted); margin-top:6px;">cancelados</div>
-  </div>
-</div>
+<div x-data="dashboard()" x-init="init()">
 
-<!-- Agendamentos do dia -->
-<div class="card">
-  <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:20px;">
-    <div style="font-size:15px; font-weight:700; color:#f1f5f9;">Agenda de Hoje</div>
-    <a href="/appointments" class="btn-ghost" style="font-size:12.5px; padding:7px 14px;">Ver todos</a>
+  <!-- ── Header ── -->
+  <div class="page-header" style="display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:14px;">
+    <div>
+      <div class="page-title">Dashboard</div>
+      <div class="page-subtitle mono" style="font-size:12px;">{{ period_label }}</div>
+    </div>
+    <!-- Status do agente -->
+    <div style="display:flex; align-items:center; gap:10px; background:var(--surface); border:1px solid var(--border); padding:10px 16px; border-radius:10px; flex-shrink:0;">
+      <div style="width:8px;height:8px;border-radius:50%;background:{% if agent_active %}var(--green){% else %}var(--muted){% endif %};
+        {% if agent_active %}box-shadow:0 0 0 3px rgba(34,197,94,0.2);animation:pulse 2s infinite;{% endif %}"></div>
+      <span style="font-size:13px; font-weight:600; color:{% if agent_active %}var(--green){% else %}var(--muted){% endif %};">
+        {{ agent_name }} — {% if agent_active %}Ativo{% else %}Inativo{% endif %}
+      </span>
+      <a href="/agent/config" style="font-size:12px; color:var(--accent); text-decoration:none; margin-left:4px;">Config</a>
+    </div>
   </div>
 
-  {% if appointments_today %}
-  <table class="data-table">
-    <thead>
-      <tr>
-        <th>Horario</th>
-        <th>Cliente</th>
-        <th>Servico</th>
-        <th>Profissional</th>
-        <th>Status</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for apt in appointments_today %}
-      <tr>
-        <td>
-          <span class="mono" style="font-size:13.5px; color:var(--accent);">
-            {{ apt.starts_at[11:16] if apt.starts_at else '—' }}
-          </span>
-        </td>
-        <td>
-          <div style="font-weight:500;">{{ apt.clients.name if apt.clients else '—' }}</div>
-          <div style="font-size:12px; color:var(--muted);">{{ apt.clients.phone if apt.clients else '' }}</div>
-        </td>
-        <td style="color:var(--muted); font-size:13.5px;">{{ apt.services.name if apt.services else '—' }}</td>
-        <td style="color:var(--muted); font-size:13.5px;">{{ apt.professionals.name if apt.professionals else '—' }}</td>
-        <td>
-          {% if apt.status == 'confirmed' %}<span class="badge-green">Confirmado</span>
-          {% elif apt.status == 'scheduled' %}<span class="badge-yellow">Pendente</span>
-          {% elif apt.status == 'cancelled' %}<span class="badge-red">Cancelado</span>
-          {% elif apt.status == 'completed' %}<span class="badge-blue">Concluido</span>
-          {% else %}<span class="badge-gray">{{ apt.status }}</span>
-          {% endif %}
-        </td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-  {% else %}
-  <div style="text-align:center; padding:48px 0; color:var(--muted);">
-    <svg width="40" height="40" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" style="margin:0 auto 12px; display:block; opacity:0.4;">
-      <rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>
-    </svg>
-    <div style="font-size:14px;">Nenhum agendamento para hoje.</div>
+  <!-- ── Barra de Período ── -->
+  <div style="background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:14px 18px; margin-bottom:24px; display:flex; align-items:center; flex-wrap:wrap; gap:10px;">
+
+    <!-- Quick filters -->
+    <div style="display:flex; gap:6px; flex-wrap:wrap;">
+      <button class="period-btn {% if period == 'today' or not period %}active{% endif %}"
+              @click="navigate('today')">Hoje</button>
+      <button class="period-btn {% if period == 'tomorrow' %}active{% endif %}"
+              @click="navigate('tomorrow')">Amanhã</button>
+      <button class="period-btn {% if period == 'week' %}active{% endif %}"
+              @click="navigate('week')">Esta Semana</button>
+      <button class="period-btn {% if period == 'next_week' %}active{% endif %}"
+              @click="navigate('next_week')">Próxima Semana</button>
+      <button class="period-btn {% if period == 'month' %}active{% endif %}"
+              @click="navigate('month')">Este Mês</button>
+    </div>
+
+    <!-- Separador -->
+    <div style="width:1px; height:28px; background:var(--border); flex-shrink:0;"></div>
+
+    <!-- Intervalo customizado -->
+    <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+      <span style="font-size:12px; color:var(--muted); font-weight:600; white-space:nowrap;">Personalizado:</span>
+      <input type="date" class="date-input {% if period == 'custom' %}border-accent{% endif %}"
+             x-model="customStart"
+             value="{{ date_from }}"
+             @change="onCustomChange()">
+      <span style="font-size:12px; color:var(--muted);">até</span>
+      <input type="date" class="date-input {% if period == 'custom' %}border-accent{% endif %}"
+             x-model="customEnd"
+             value="{{ date_to }}"
+             @change="onCustomChange()">
+      <button class="period-btn {% if period == 'custom' %}active{% endif %}"
+              @click="navigateCustom()"
+              style="padding:7px 12px;">
+        <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" style="display:inline; vertical-align:middle; margin-right:3px;"><polyline points="9 18 15 12 9 6"/></svg>
+        Buscar
+      </button>
+    </div>
   </div>
-  {% endif %}
-</div>
+
+  <!-- ── Cards de Métricas ── -->
+  <div style="display:grid; grid-template-columns:repeat(5,1fr); gap:14px; margin-bottom:28px;">
+    <div class="card" style="border-top:2px solid var(--accent);">
+      <div style="font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.08em; color:var(--muted); margin-bottom:10px;">Total</div>
+      <div style="font-size:36px; font-weight:700; color:#f1f5f9; font-family:var(--font-mono); line-height:1;">{{ total_today }}</div>
+      <div style="font-size:12px; color:var(--muted); margin-top:6px;">agendamentos</div>
+    </div>
+    <div class="card" style="border-top:2px solid var(--green);">
+      <div style="font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.08em; color:var(--muted); margin-bottom:10px;">Confirmados</div>
+      <div style="font-size:36px; font-weight:700; color:var(--green); font-family:var(--font-mono); line-height:1;">{{ confirmed }}</div>
+      <div style="font-size:12px; color:var(--muted); margin-top:6px;">confirmados</div>
+    </div>
+    <div class="card" style="border-top:2px solid #eab308;">
+      <div style="font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.08em; color:var(--muted); margin-bottom:10px;">Pendentes</div>
+      <div style="font-size:36px; font-weight:700; color:#eab308; font-family:var(--font-mono); line-height:1;">{{ pending }}</div>
+      <div style="font-size:12px; color:var(--muted); margin-top:6px;">aguardando</div>
+    </div>
+    <div class="card" style="border-top:2px solid var(--red);">
+      <div style="font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.08em; color:var(--muted); margin-bottom:10px;">Cancelados</div>
+      <div style="font-size:36px; font-weight:700; color:var(--red); font-family:var(--font-mono); line-height:1;">{{ cancelled }}</div>
+      <div style="font-size:12px; color:var(--muted); margin-top:6px;">cancelados</div>
+    </div>
+    <div class="card" style="border-top:2px solid #6366f1;">
+      <div style="font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.08em; color:var(--muted); margin-bottom:10px;">Concluídos</div>
+      <div style="font-size:36px; font-weight:700; color:#818cf8; font-family:var(--font-mono); line-height:1;">{{ completed }}</div>
+      <div style="font-size:12px; color:var(--muted); margin-top:6px;">concluídos</div>
+    </div>
+  </div>
+
+  <!-- ── Tabela de Agendamentos ── -->
+  <div class="card">
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:20px;">
+      <div>
+        <div style="font-size:15px; font-weight:700; color:#f1f5f9;">
+          {% if multi_day %}Agenda do Período{% else %}Agenda de Hoje{% endif %}
+        </div>
+        <div style="font-size:12px; color:var(--muted); margin-top:3px;">{{ period_label }}</div>
+      </div>
+      <a href="/appointments" class="btn-ghost" style="font-size:12.5px; padding:7px 14px;">Ver agenda completa</a>
+    </div>
+
+    {% if appointments_today %}
+
+      {% set ns = namespace(last_day='') %}
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>{% if multi_day %}Data / {% endif %}Horário</th>
+            <th>Cliente</th>
+            <th>Serviço</th>
+            <th>Profissional</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for apt in appointments_today %}
+            {% if multi_day %}
+              {% set apt_day = apt.display_date if apt.display_date else (apt.scheduled_at[:10] if apt.scheduled_at else '') %}
+              {% if apt_day != ns.last_day %}
+                {% set ns.last_day = apt_day %}
+                <tr>
+                  <td colspan="5" style="background:rgba(59,130,246,0.06); padding:8px 14px; border-bottom:1px solid var(--border);">
+                    <span style="font-size:11.5px; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:var(--accent);">
+                      {% set p = apt_day.split('-') %}
+                      {{ p[2] }}/{{ p[1] }}/{{ p[0] }}
+                    </span>
+                  </td>
+                </tr>
+              {% endif %}
+            {% endif %}
+            <tr>
+              <td>
+                <span class="mono" style="font-size:13.5px; color:var(--accent);">
+                  {{ apt.display_time if apt.display_time else '—' }}
+                </span>
+              </td>
+              <td>
+                <div style="font-weight:500;">{{ apt.clients.name if apt.clients else '—' }}</div>
+                <div style="font-size:12px; color:var(--muted);">{{ apt.clients.phone if apt.clients else '' }}</div>
+              </td>
+              <td style="color:var(--muted); font-size:13.5px;">{{ apt.services.name if apt.services else '—' }}</td>
+              <td style="color:var(--muted); font-size:13.5px;">{{ apt.professionals.name if apt.professionals else '—' }}</td>
+              <td>
+                {% if apt.status == 'confirmed' %}<span class="badge-green">Confirmado</span>
+                {% elif apt.status == 'scheduled' %}<span class="badge-yellow">Pendente</span>
+                {% elif apt.status == 'cancelled' %}<span class="badge-red">Cancelado</span>
+                {% elif apt.status == 'completed' %}<span class="badge-blue">Concluído</span>
+                {% elif apt.status == 'no_show' %}<span class="badge-gray">No-show</span>
+                {% else %}<span class="badge-gray">{{ apt.status }}</span>
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+    {% else %}
+      <div style="text-align:center; padding:48px 0; color:var(--muted);">
+        <svg width="40" height="40" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" style="margin:0 auto 12px; display:block; opacity:0.4;">
+          <rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>
+        </svg>
+        <div style="font-size:14px;">Nenhum agendamento no período selecionado.</div>
+      </div>
+    {% endif %}
+  </div>
+
+</div><!-- /x-data -->
+{% endblock %}
+
+{% block scripts %}
+<script>
+function dashboard() {
+  return {
+    customStart: '{{ date_from }}',
+    customEnd:   '{{ date_to }}',
+
+    init() {
+      // Garante que os date inputs reflitam o período atual
+      this.customStart = '{{ date_from }}';
+      this.customEnd   = '{{ date_to }}';
+    },
+
+    navigate(period) {
+      window.location.href = `/dashboard?period=${period}`;
+    },
+
+    onCustomChange() {
+      // Aguarda o usuário clicar em "Buscar" — não navega automaticamente
+    },
+
+    navigateCustom() {
+      if (!this.customStart || !this.customEnd) return;
+      if (this.customStart > this.customEnd) {
+        alert('A data inicial não pode ser maior que a data final.');
+        return;
+      }
+      window.location.href = `/dashboard?period=custom&start=${this.customStart}&end=${this.customEnd}`;
+    }
+  }
+}
+</script>
 {% endblock %}

@@ -1,0 +1,251 @@
+{
+  "name": "03.0 - LEMBRETES AUTOMATICOS - BARBEARIA SILVA",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 10
+            }
+          ]
+        }
+      },
+      "id": "1b2eca6f-f53e-49a0-904f-d178c8cbdff5",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const now = new Date();\n\n// Janela 24h: agendamentos entre 23h50 e 24h10 a partir de agora\nconst w24s = new Date(now.getTime() + (23 * 60 + 50) * 60000);\nconst w24e = new Date(now.getTime() + (24 * 60 + 10) * 60000);\n\n// Janela 1h: agendamentos entre 50 e 70 min a partir de agora\nconst w1s = new Date(now.getTime() + 50 * 60000);\nconst w1e = new Date(now.getTime() + 70 * 60000);\n\nreturn [\n  {\n    json: {\n      tipo: '24h',\n      field: 'reminder_24h_sent_at',\n      null_filter: 'reminder_24h_sent_at=is.null',\n      window_start: w24s.toISOString(),\n      window_end:   w24e.toISOString()\n    }\n  },\n  {\n    json: {\n      tipo: '1h',\n      field: 'reminder_1h_sent_at',\n      null_filter: 'reminder_1h_sent_at=is.null',\n      window_start: w1s.toISOString(),\n      window_end:   w1e.toISOString()\n    }\n  }\n];"
+      },
+      "id": "1ca4d7a5-e4ce-4e29-8979-8ff266f057b8",
+      "name": "Calcular Janelas",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ 'https://myofgasezxvbyryenpeq.supabase.co/rest/v1/appointments?select=*,clients(name,phone)&tenant_id=eq.aaaaaaaa-0000-0000-0000-000000000001&scheduled_at=gte.' + $json.window_start + '&scheduled_at=lte.' + $json.window_end + '&' + $json.null_filter + '&status=in.(scheduled,confirmed)&order=scheduled_at' }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im15b2ZnYXNlenh2YnlyeWVucGVxIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NjI3OTg5NiwiZXhwIjoyMDkxODU1ODk2fQ.fEJNZzZnlnJbasdEapSZa9b1DCApNjbtWDOKoHkE1uc"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im15b2ZnYXNlenh2YnlyeWVucGVxIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NjI3OTg5NiwiZXhwIjoyMDkxODU1ODk2fQ.fEJNZzZnlnJbasdEapSZa9b1DCApNjbtWDOKoHkE1uc"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "8173c008-b0dc-4226-9b83-adb393b3e645",
+      "name": "Buscar Lembretes",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        480,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const responses = $input.all();\nconst configs   = $('Calcular Janelas').all();\n\nconst output = [];\nfor (let i = 0; i < responses.length; i++) {\n  const appointments = responses[i].json;\n  const config       = configs[i] ? configs[i].json : {};\n\n  if (!Array.isArray(appointments)) continue;\n\n  for (const apt of appointments) {\n    const tipo   = config.tipo  || '?';\n    const field  = config.field || '';\n    const cName  = (apt.clients && apt.clients.name)  ? apt.clients.name  : 'Cliente';\n    const cPhone = (apt.clients && apt.clients.phone) ? apt.clients.phone : '';\n\n    // Converter UTC -> Brasilia (UTC-3)\n    const dt      = new Date(apt.scheduled_at);\n    const dtLocal = new Date(dt.getTime() - 3 * 60 * 60000);\n    const hh  = String(dtLocal.getUTCHours()).padStart(2, '0');\n    const mm  = String(dtLocal.getUTCMinutes()).padStart(2, '0');\n    const dd  = String(dtLocal.getUTCDate()).padStart(2, '0');\n    const mo  = String(dtLocal.getUTCMonth() + 1).padStart(2, '0');\n    const timeStr = hh + ':' + mm;\n    const dateStr = dd + '/' + mo;\n\n    let mensagem;\n    if (tipo === '24h') {\n      mensagem = 'Ola, ' + cName + '! Lembrando do seu agendamento *amanha, ' + dateStr + ' as ' + timeStr + '*. Caso precise remarcar ou cancelar, e so nos avisar!';\n    } else {\n      mensagem = 'Ola, ' + cName + '! Seu agendamento e *hoje as ' + timeStr + '* — daqui a pouco! Te esperamos.';\n    }\n\n    output.push({\n      json: {\n        appointment_id:  apt.id,\n        client_name:     cName,\n        client_phone:    cPhone,\n        scheduled_at:    apt.scheduled_at,\n        tipo:            tipo,\n        field_to_update: field,\n        mensagem:        mensagem\n      }\n    });\n  }\n}\n\nreturn output;"
+      },
+      "id": "a54a4b83-287d-4720-bc0a-e58b063594f6",
+      "name": "Extrair Itens",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      },
+      "id": "32e7f22e-fab3-4e83-a8dd-7dcc463782d2",
+      "name": "Split in Batches",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        960,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://mkproapi.mkautosolution.cloud/v2/api/external/0df39b48-c373-4b11-87be-96d873c3ab97",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Barear eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0ZW5hbnRJZCI6NywicHJvZmlsZSI6ImFkbWluIiwic2Vzc2lvbklkIjo2NywiaWF0IjoxNzc2MzA4NzIxLCJleHAiOjE4MzkzODA3MjF9.lG628rkPjuveIUSbDKln7a9Foe3rJv9NN8yVTb0099E"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "string",
+        "body": "={{ JSON.stringify({ number: $json.client_phone, text: $json.mensagem }) }}",
+        "options": {}
+      },
+      "id": "0ed0e2f1-d4a5-4b7a-bfab-89914c1edb17",
+      "name": "Enviar WhatsApp",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1200,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "={{ 'https://myofgasezxvbyryenpeq.supabase.co/rest/v1/appointments?id=eq.' + $json.appointment_id + '&tenant_id=eq.aaaaaaaa-0000-0000-0000-000000000001' }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im15b2ZnYXNlenh2YnlyeWVucGVxIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NjI3OTg5NiwiZXhwIjoyMDkxODU1ODk2fQ.fEJNZzZnlnJbasdEapSZa9b1DCApNjbtWDOKoHkE1uc"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im15b2ZnYXNlenh2YnlyeWVucGVxIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NjI3OTg5NiwiZXhwIjoyMDkxODU1ODk2fQ.fEJNZzZnlnJbasdEapSZa9b1DCApNjbtWDOKoHkE1uc"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "return=minimal"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "string",
+        "body": "={{ JSON.stringify({ [$json.field_to_update]: new Date().toISOString() }) }}",
+        "options": {}
+      },
+      "id": "5a8a8bee-8ea5-4a17-b450-de6831d670ed",
+      "name": "Marcar Enviado",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1440,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Calcular Janelas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calcular Janelas": {
+      "main": [
+        [
+          {
+            "node": "Buscar Lembretes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar Lembretes": {
+      "main": [
+        [
+          {
+            "node": "Extrair Itens",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extrair Itens": {
+      "main": [
+        [
+          {
+            "node": "Split in Batches",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split in Batches": {
+      "main": [
+        [
+          {
+            "node": "Enviar WhatsApp",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Enviar WhatsApp": {
+      "main": [
+        [
+          {
+            "node": "Marcar Enviado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Marcar Enviado": {
+      "main": [
+        [
+          {
+            "node": "Split in Batches",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "id": "fa7fcf87-6907-4815-a04c-324b4c889966",
+  "meta": {
+    "instanceId": "mike-agentes"
+  }
+}
